@@ -10,7 +10,7 @@
 body {
     margin: 0;
     font-family: Inter, sans-serif;
-    background: #0e0e10; /* jednolite tło całej strony */
+    background: #0e0e10;
     color: white;
 }
 
@@ -29,7 +29,7 @@ body {
     flex-direction: column;
     gap: 20px;
     padding: 20px;
-    background: transparent; /* przezroczyste tło kolumn */
+    background: transparent;
     border-radius: 12px;
 }
 
@@ -37,7 +37,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    background: rgba(24,24,27,0.8); /* lekko ciemniejsze, półprzezroczyste tło */
+    background: rgba(24,24,27,0.8);
     padding: 15px;
     border-radius: 10px;
 }
@@ -189,7 +189,6 @@ button.bg-btn.selected {
     background-color: transparent;
     padding: 0;
 }
-
 </style>
 </head>
 <body>
@@ -241,9 +240,6 @@ button.bg-btn.selected {
 <div class="bottom-preview-container"><div id="preview"></div></div>
 
 <script>
-const LS_BADGES_BASE='ttv_badges_base';
-const LS_BADGES_ACTIVE='ttv_badges_active';
-const LS_BACKGROUND='ttv_bg_style';
 const usernameEl=document.getElementById('username');
 const messageEl=document.getElementById('message');
 const previewEl=document.getElementById('preview');
@@ -254,22 +250,19 @@ const bgLightBtn=document.getElementById('bgLightBtn');
 const colorSwatches=document.querySelectorAll('.color-swatch');
 const saveCommentBtn=document.getElementById('save-comment');
 
-let badgesBase=JSON.parse(localStorage.getItem(LS_BADGES_BASE)||'[]');
-let activeBadges=JSON.parse(localStorage.getItem(LS_BADGES_ACTIVE)||'[]');
-let activeBackground=localStorage.getItem(LS_BACKGROUND)||'dark';
+let badgesBase=[];
+let activeBadges=[];
+let activeBackground='dark';
 let activeColor='#9147ff';
 
 function uid(){return 'b'+Math.random().toString(36).slice(2,9);}
-function saveBadgesBase(){localStorage.setItem(LS_BADGES_BASE,JSON.stringify(badgesBase));}
-function saveActiveBadges(){localStorage.setItem(LS_BADGES_ACTIVE,JSON.stringify(activeBadges));}
-function saveBackground(){localStorage.setItem(LS_BACKGROUND,activeBackground);}
 
 async function initializeLocalEmblems(){
   const response=await fetch('emblems.json');
   const files=await response.json();
   badgesBase=files.map(src=>({id:uid(),data:src}));
-  saveBadgesBase();
   refreshEmblemGrid();
+  render();
 }
 
 function refreshEmblemGrid(){
@@ -284,13 +277,11 @@ function refreshEmblemGrid(){
         if(activeBadges.some(a=>a.id===b.id)) img.classList.add('active');
 
         img.addEventListener('click',()=>{
-            if(activeBadges.some(a=>a.id===b.id)) {
+            if(activeBadges.some(a=>a.id===b.id)){
                 activeBadges=activeBadges.filter(a=>a.id!==b.id);
             } else {
-                // Dodaj tylko jeśli nie ma już tego samego id
                 if(!activeBadges.some(a=>a.id===b.id)) activeBadges.push(b);
             }
-            saveActiveBadges();
             refreshEmblemGrid();
             render();
         });
@@ -331,12 +322,8 @@ function render(){
     const messageText=escapeHtml(messageEl.value||'message');
     const parts=messageText.replace(/\n/g,'<br>');
 
-    // Usunięcie duplikatów przed renderowaniem
-    const uniqueBadges = activeBadges.filter((b,index,self)=>
-        index === self.findIndex(x => x.id===b.id)
-    );
-
-    const badgeHtml=uniqueBadges.map(b=>`<img class="badge" src="${b.data}">`).join('');
+    // activeBadges są unikalne w pamięci, więc bez dodatkowego filtrowania
+    const badgeHtml=activeBadges.map(b=>`<img class="badge" src="${b.data}">`).join('');
     const bgClass=activeBackground==='light'?'light-bg':'';
 
     previewEl.innerHTML=`
@@ -348,7 +335,6 @@ function render(){
 
 function updateBackground(style){
     activeBackground=style;
-    saveBackground();
     bgDarkBtn.classList.toggle('selected',style==='dark');
     bgLightBtn.classList.toggle('selected',style==='light');
     render();
@@ -357,7 +343,6 @@ function updateBackground(style){
 // Inicjalizacja
 initializeLocalEmblems();
 updateBackground(activeBackground);
-render();
 </script>
 </body>
 </html>
