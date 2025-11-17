@@ -6,13 +6,8 @@
 <title>Local Twitch Message Creator</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
-body {
-    margin: 0;
-    font-family: Inter, sans-serif;
-    background: #0e0e10;
-    color: white;
-}
-.container { max-width: 1200px; margin:20px auto; display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+body { margin:0; font-family:Inter,sans-serif; background:#0e0e10; color:white; }
+.container { max-width:1200px; margin:20px auto; display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
 .control-column { width:320px; display:flex; flex-direction:column; gap:20px; padding:20px; background:transparent; border-radius:12px; }
 .controls-block { display:flex; flex-direction:column; gap:12px; background:rgba(24,24,27,0.8); padding:15px; border-radius:10px; }
 .controls-block h3 { margin:0 0 10px 0; color:#fff; font-size:16px; font-weight:600; text-align:left; }
@@ -29,7 +24,7 @@ button { padding:10px 12px; border:none; border-radius:8px; font-weight:600; cur
 button#save-comment { background:#9147ff; color:#fff; }
 button.bg-btn { border:1px solid #333; background:#333; color:white; }
 button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
-.bottom-preview-container { width:100%; display:flex; justify-content:center; margin-top:30px; }
+.bottom-preview-container { width:100%; display:flex; flex-direction:column; align-items:center; margin-top:30px; gap:10px; }
 .chat-line { max-width:480px; padding:10px 15px; border-radius:8px; background:#000; font-size:16px; display:inline-block; text-align:left; overflow-wrap:break-word; transition: background 0.2s,color 0.2s; }
 .chat-line.light-bg { background:#fff; color:#000; }
 .chat-line.light-bg .message { color:#000; }
@@ -82,20 +77,22 @@ button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 <div class="controls-block" id="message-controls-block">
 <h3>Username</h3>
 <input id="username" value="test">
-<h3>Message Text</h3>
-<textarea id="message" rows="5">Testowy komunikat.</textarea>
+<h3>Message Text (max 300 chars)</h3>
+<textarea id="message" rows="5" maxlength="300">Testowy komunikat.</textarea>
 <h3>Twitch Channel for Emotes</h3>
 <input id="channelInput" placeholder="Enter channel name">
 <button id="loadChannelEmotesBtn">Load Emotes</button>
 <button id="toggleEmotes">😀 Show Emotes</button>
 <div id="emotesGridContainer" style="display:none; max-height:220px; overflow-y:auto; margin-top:10px;"></div>
+</div>
+</div>
+
+</div>
+
+<div class="bottom-preview-container">
+<div id="preview"></div>
 <button id="save-comment">Export PNG</button>
 </div>
-</div>
-
-</div>
-
-<div class="bottom-preview-container"><div id="preview"></div></div>
 
 <script>
 const usernameEl=document.getElementById('username');
@@ -204,7 +201,6 @@ async function loadChannelEmotes(channel){
     }
 }
 
-// przycisk load emotek kanału
 loadChannelEmotesBtn.addEventListener('click', async()=>{
     currentChannel = channelInput.value.trim().toLowerCase();
     if(currentChannel){
@@ -215,7 +211,6 @@ loadChannelEmotesBtn.addEventListener('click', async()=>{
     }
 });
 
-// toggle grid emotek
 toggleEmotesBtn.addEventListener('click', async ()=>{
     if(!emotesLoaded){
         const allEmotes = [...globalEmotes];
@@ -228,6 +223,7 @@ toggleEmotesBtn.addEventListener('click', async ()=>{
             img.className='chat-emote';
             img.addEventListener('click', ()=>{
                 messageEl.value += ` ${e.name} `;
+                if(messageEl.value.length>300) messageEl.value=messageEl.value.slice(0,300);
                 render();
             });
             emotesGridContainer.appendChild(img);
@@ -251,7 +247,9 @@ function parseEmotes(message){
 // ---- Render ----
 function render(){
     const name=escapeHtml(usernameEl.value||'test');
-    const messageText=messageEl.value||'message';
+    let messageText=messageEl.value||'message';
+    if(messageText.length>300) messageText=messageText.slice(0,300);
+    messageEl.value = messageText;
     const parts=parseEmotes(messageText);
     const badgeHtml=activeBadges.map(b=>`<img class="badge" src="${b.data}">`).join('');
     const bgClass=activeBackground==='light'?'light-bg':'';
