@@ -10,6 +10,7 @@ body {margin:0;font-family:Inter,sans-serif;background:#0e0e10;color:white;displ
 .container {flex:1;display:flex;flex-direction:column;gap:10px;padding:10px;}
 .controls-block {background:rgba(24,24,27,0.8);padding:10px;border-radius:8px;display:flex;flex-direction:column;gap:8px;}
 input,textarea{width:100%;padding:8px;border-radius:6px;border:1px solid #444;background:#000;color:white;resize:none;}
+textarea{max-height:100px;}
 button{padding:8px;border:none;border-radius:6px;cursor:pointer;}
 .chat-line{background:#000;border-radius:6px;padding:8px;display:inline-block;margin-top:10px;}
 .chat-line.light-bg{background:#fff;color:#000;}
@@ -18,28 +19,35 @@ button{padding:8px;border:none;border-radius:6px;cursor:pointer;}
 .username{font-weight:700;}
 .message{word-break:break-word;display:inline;}
 #preview-container{border:1px solid #333;padding:10px;border-radius:8px;margin-top:10px;}
-#emotes-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;overflow-y:auto;max-height:300px;}
-.emote-item{width:32px;height:32px;cursor:pointer;border:1px solid transparent;border-radius:4px;}
-.emote-item:hover{border-color:#9147ff;}
+#badge-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;overflow-y:auto;max-height:300px;}
+.badge-item{width:32px;height:32px;cursor:pointer;border:1px solid transparent;border-radius:4px;}
+.badge-item:hover{border-color:#9147ff;}
+#controls-wrapper{display:flex;gap:10px;}
+#main-controls{flex:1;}
 </style>
 </head>
 <body>
-<div class="container" style="flex:1;">
-    <div class="controls-block">
-        <h3>Username</h3>
-        <input id="username" value="test">
-        <h3>Message (max 300 znaków)</h3>
-        <textarea id="message" rows="4" maxlength="300">Testowy komunikat.</textarea>
-        <div id="preview-container"><div id="preview"></div></div>
-        <button id="save-comment">Export PNG</button>
-    </div>
-</div>
 
-<div class="container" style="width:250px;">
+<div id="controls-wrapper">
+  <!-- Główne kontrolki -->
+  <div id="main-controls" class="container">
     <div class="controls-block">
-        <h3>Emotes</h3>
-        <div id="emotes-grid"></div>
+      <h3>Username</h3>
+      <input id="username" value="test">
+      <h3>Message (max 300 znaków)</h3>
+      <textarea id="message" rows="4" maxlength="300">Testowy komunikat.</textarea>
+      <div id="preview-container"><div id="preview"></div></div>
+      <button id="save-comment">Export PNG</button>
     </div>
+  </div>
+
+  <!-- Badge column -->
+  <div id="badge-column" class="container" style="width:250px;">
+    <div class="controls-block">
+      <h3>Badges</h3>
+      <div id="badge-grid"></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -47,62 +55,59 @@ const usernameEl = document.getElementById('username');
 const messageEl = document.getElementById('message');
 const previewEl = document.getElementById('preview');
 const saveCommentBtn = document.getElementById('save-comment');
-const emotesGrid = document.getElementById('emotes-grid');
+const badgeGrid = document.getElementById('badge-grid');
 
-let emotes = [];
+let badgesBase = [
+  // Tutaj możesz dodać swoje badge np. {id:'b1', data:'Badges/mod.png'}
+];
+let activeBadges = [];
 
-async function loadEmotes() {
-    const res = await fetch('emotes.json');
-    const data = await res.json();
-    emotes = data;
-    renderEmotesGrid();
-}
+function uid(){return 'b'+Math.random().toString(36).slice(2,9);}
 
-function renderEmotesGrid() {
-    emotesGrid.innerHTML = '';
-    emotes.forEach(e=>{
-        const img = document.createElement('img');
-        img.src = e.file;
-        img.alt = e.name;
-        img.className = 'emote-item';
-        img.title = e.name;
-        img.addEventListener('click', ()=> {
-            insertEmote(e.file);
-        });
-        emotesGrid.appendChild(img);
+function renderBadgesGrid(){
+  badgeGrid.innerHTML='';
+  badgesBase.forEach(b=>{
+    const img = document.createElement('img');
+    img.src = b.data;
+    img.alt = b.id;
+    img.className = 'badge-item';
+    if(activeBadges.some(a=>a.id===b.id)) img.style.borderColor='#00ff00';
+    img.addEventListener('click', ()=>{
+      if(activeBadges.some(a=>a.id===b.id)) activeBadges = activeBadges.filter(a=>a.id!==b.id);
+      else activeBadges.push(b);
+      renderBadgesGrid();
+      render();
     });
-}
-
-function insertEmote(file){
-    messageEl.value += ` [emote:${file}] `;
-    render();
+    badgeGrid.appendChild(img);
+  });
 }
 
 function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 function render(){
-    const name = escapeHtml(usernameEl.value||'test');
-    let msg = escapeHtml(messageEl.value||'');
-    // Zamiana [emote:file] na img
-    msg = msg.replace(/\[emote:(.+?)\]/g, (_,file)=>`<img class="chat-emote" src="${file}" style="height:1em;vertical-align:middle">`);
-    previewEl.innerHTML = `<div class="chat-line"><span class="username">${name}</span>: <span class="message">${msg}</span></div>`;
+  const name = escapeHtml(usernameEl.value||'test');
+  let msg = escapeHtml(messageEl.value||'');
+  if(msg.length>300) msg = msg.slice(0,300);
+  const badgeHtml = activeBadges.map(b=>`<img class="badge" src="${b.data}">`).join('');
+  previewEl.innerHTML = `<div class="chat-line"><div class="badges">${badgeHtml}</div><span class="username">${name}</span>: <span class="message">${msg}</span></div>`;
 }
 
 usernameEl.addEventListener('input', render);
 messageEl.addEventListener('input', render);
 
 saveCommentBtn.addEventListener('click', async()=>{
-    render();
-    if(!previewEl.firstChild) return;
-    const canvas = await html2canvas(previewEl.firstChild,{backgroundColor:null,scale:2});
-    const data = canvas.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = data;
-    a.download='message.png';
-    a.click();
+  render();
+  if(!previewEl.firstChild) return;
+  const canvas = await html2canvas(previewEl.firstChild,{backgroundColor:null,scale:2});
+  const data = canvas.toDataURL('image/png');
+  const a = document.createElement('a');
+  a.href = data;
+  a.download='message.png';
+  a.click();
 });
 
-loadEmotes();
+// Inicjalizacja
+renderBadgesGrid();
 render();
 </script>
 </body>
