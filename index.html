@@ -275,15 +275,21 @@ async function initializeLocalEmblems(){
 function refreshEmblemGrid(){
     emblemGrid.innerHTML='';
     limitMessage.textContent=`Emblems in base: ${badgesBase.length}`;
+
     badgesBase.forEach(b=>{
         const img=document.createElement('img');
         img.className='active-emblem-item';
         img.src=b.data;
         img.alt=b.id;
         if(activeBadges.some(a=>a.id===b.id)) img.classList.add('active');
+
         img.addEventListener('click',()=>{
-            if(activeBadges.some(a=>a.id===b.id)) activeBadges=activeBadges.filter(a=>a.id!==b.id);
-            else activeBadges.push(b);
+            if(activeBadges.some(a=>a.id===b.id)) {
+                activeBadges=activeBadges.filter(a=>a.id!==b.id);
+            } else {
+                // Dodaj tylko jeśli nie ma już tego samego id
+                if(!activeBadges.some(a=>a.id===b.id)) activeBadges.push(b);
+            }
             saveActiveBadges();
             refreshEmblemGrid();
             render();
@@ -324,8 +330,15 @@ function render(){
     const name=escapeHtml(usernameEl.value||'test');
     const messageText=escapeHtml(messageEl.value||'message');
     const parts=messageText.replace(/\n/g,'<br>');
-    const badgeHtml=activeBadges.map(b=>`<img class="badge" src="${b.data}">`).join('');
+
+    // Usunięcie duplikatów przed renderowaniem
+    const uniqueBadges = activeBadges.filter((b,index,self)=>
+        index === self.findIndex(x => x.id===b.id)
+    );
+
+    const badgeHtml=uniqueBadges.map(b=>`<img class="badge" src="${b.data}">`).join('');
     const bgClass=activeBackground==='light'?'light-bg':'';
+
     previewEl.innerHTML=`
         <div class="chat-line ${bgClass}">
             <div class="badges">${badgeHtml}</div>
