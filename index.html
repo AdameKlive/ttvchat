@@ -167,19 +167,25 @@ button.bg-btn.selected {
 
 .badges {
     display: inline-flex;
-    align-items: center;
-    gap: 3px;
+    align-items: center; /* wyrównanie w pionie */
+    gap: 2px;
     margin-right: 5px;
 }
+
 .badge {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
 }
+
 .username {
     font-weight: 700;
-    white-space: nowrap;
-    display: inline;
+    display: inline-flex;
+    align-items: center; /* wyrównanie w pionie względem badge */
+    line-height: 18px; /* dopasowanie wysokości do badge */
+    vertical-align: middle;
 }
+
 .message {
     word-break: break-word;
     display: inline;
@@ -346,3 +352,4 @@ updateBackground(activeBackground);
 </script>
 </body>
 </html>
+
