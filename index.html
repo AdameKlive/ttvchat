@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Local Twitch Message Creator</title>
+<title>Twitch Message Creator</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 /* --- Kompletny, spójny CSS --- */
@@ -237,7 +237,7 @@ button.bg-btn.selected {
 <h3>Username</h3>
 <input id="username" value="test">
 <h3>Message Text</h3>
-<textarea id="message" rows="5">Testowy komunikat.</textarea>
+<textarea id="message" rows="5" maxlength="300">Testowy komunikat.</textarea>
 <button id="save-comment">Export PNG</button>
 </div>
 </div>
@@ -352,4 +352,5 @@ updateBackground(activeBackground);
 </script>
 </body>
 </html>
+
 
