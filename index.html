@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Twitch Message Creator</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+body{margin:0;font-family:Inter,sans-serif;background:#0e0e10;color:white;}
+.container{max-width:1200px;margin:20px auto;display:flex;gap:20px;flex-wrap:wrap;justify-content:center;}
+.control-column{width:320px;display:flex;flex-direction:column;gap:20px;padding:20px;background:#18181b;border-radius:12px;}
+.controls-block{display:flex;flex-direction:column;gap:12px;background:#0f0f12;padding:15px;border-radius:10px;}
+.controls-block h3{margin:0 0 10px 0;color:#fff;font-size:16px;font-weight:600;text-align:left;}
+.grid-select{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;max-height:220px;overflow-y:auto;padding:8px;border:1px solid #333;border-radius:6px;background:#121214;}
+.color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.2s;}
+.color-swatch.selected{border-color:#9147ff;}
+.color-swatch:hover{opacity:0.8;}
+.active-emblem-item{width:28px;height:28px;object-fit:contain;cursor:pointer;border:2px solid transparent;border-radius:4px;transition:all 0.2s;}
+.active-emblem-item.active{border-color:#00ff00;}
+.active-emblem-item:hover{opacity:0.8;}
+input,textarea{width:100%;padding:10px;border-radius:6px;border:1px solid #444;background:#000;color:white;box-sizing:border-box;resize:none;}
+input:focus,textarea:focus{border-color:#9147ff;outline:none;}
+button{padding:10px 12px;border:none;border-radius:8px;font-weight:600;cursor:pointer;width:100%;}
+button#save-comment,button#add-custom-emblem{background:#9147ff;color:#fff;}
+button.secondary{background:#333;color:#fff;}
+button.bg-btn{border:1px solid #333;background:#333;color:white;}
+button.bg-btn.selected{border-color:#9147ff;background:#5a3d90;}
+.bottom-preview-container{width:100%;display:flex;justify-content:center;margin-top:30px;}
+.chat-line{max-width:480px;padding:10px 15px;border-radius:8px;background:#000;font-size:16px;display:inline-block;text-align:left;overflow-wrap:break-word;transition:background 0.2s,color 0.2s;}
+.chat-line.light-bg{background:#fff;color:#000;}
+.chat-line.light-bg .message{color:#000;}
+.badges{display:inline-flex;align-items:center;gap:3px;margin-right:5px;}
+.badge{width:20px;height:20px;}
+.username{font-weight:700;white-space:nowrap;display:inline;}
+.message{word-break:break-word;display:inline;}
+#message-controls-block{background-color:transparent;padding:0;}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="control-column">
+<div class="controls-block">
+<h3>Emblems Base</h3>
+<div id="limitMessage"></div>
+<div class="grid-select" id="emblemGrid"></div>
+</div>
+</div>
+
+<div class="control-column">
+<div class="controls-block">
+<h3>Username Colors</h3>
+<div class="grid-select" style="grid-template-columns:repeat(4,1fr);">
+<div class="color-swatch" style="background-color:#ff0000" data-color="#ff0000"></div>
+<div class="color-swatch" style="background-color:#00ff00" data-color="#00ff00"></div>
+<div class="color-swatch" style="background-color:#0000ff" data-color="#0000ff"></div>
+<div class="color-swatch" style="background-color:#ff8c00" data-color="#ff8c00"></div>
+<div class="color-swatch" style="background-color:#ffd700" data-color="#ffd700"></div>
+<div class="color-swatch" style="background-color:#1eff00" data-color="#1eff00"></div>
+<div class="color-swatch" style="background-color:#00ffcc" data-color="#00ffcc"></div>
+<div class="color-swatch" style="background-color:#f06400" data-color="#f06400"></div>
+<div class="color-swatch" style="background-color:#ff69b4" data-color="#ff69b4"></div>
+<div class="color-swatch" style="background-color:#9147ff" data-color="#9147ff"></div>
+<div class="color-swatch" style="background-color:#00ccff" data-color="#00ccff"></div>
+<div class="color-swatch" style="background-color:#ff4500" data-color="#ff4500"></div>
+</div>
+<h3>Message Background</h3>
+<div style="display:flex;gap:10px;">
+<button id="bgDarkBtn" class="bg-btn" style="flex:1">Dark</button>
+<button id="bgLightBtn" class="bg-btn" style="flex:1">Light</button>
+</div>
+</div>
+</div>
+
+<div class="control-column">
+<div class="controls-block" id="message-controls-block">
+<h3>Username</h3>
+<input id="username" value="test">
+<h3>Message Text</h3>
+<textarea id="message" rows="5">Testowy komunikat.</textarea>
+<button id="save-comment">Export PNG</button>
+</div>
+</div>
+</div>
+
+<div class="bottom-preview-container"><div id="preview"></div></div>
+
+<script>
+const LS_BADGES_BASE='ttv_badges_base';
+const LS_BADGES_ACTIVE='ttv_badges_active';
+const LS_BACKGROUND='ttv_bg_style';
+const usernameEl=document.getElementById('username');
+const messageEl=document.getElementById('message');
+const previewEl=document.getElementById('preview');
+const emblemGrid=document.getElementById('emblemGrid');
+const limitMessage=document.getElementById('limitMessage');
+const bgDarkBtn=document.getElementById('bgDarkBtn');
+const bgLightBtn=document.getElementById('bgLightBtn');
+const colorSwatches=document.querySelectorAll('.color-swatch');
+const saveCommentBtn=document.getElementById('save-comment');
+
+let badgesBase=JSON.parse(localStorage.getItem(LS_BADGES_BASE)||'[]');
+let activeBadges=JSON.parse(localStorage.getItem(LS_BADGES_ACTIVE)||'[]');
+let activeBackground=localStorage.getItem(LS_BACKGROUND)||'dark';
+let activeColor='#9147ff';
+
+function uid(){return 'b'+Math.random().toString(36).slice(2,9);}
+function saveBadgesBase(){localStorage.setItem(LS_BADGES_BASE,JSON.stringify(badgesBase));}
+function saveActiveBadges(){localStorage.setItem(LS_BADGES_ACTIVE,JSON.stringify(activeBadges));}
+function saveBackground(){localStorage.setItem(LS_BACKGROUND,activeBackground);}
+
+async function initializeLocalEmblems(){
+  const response=await fetch('emblems.json');
+  const files=await response.json();
+  badgesBase=files.map(src=>({id:uid(),data:src}));
+  saveBadgesBase();
+  refreshEmblemGrid();
+}
+
+function refreshEmblemGrid(){
+    emblemGrid.innerHTML='';
+    limitMessage.textContent=`Emblems in base: ${badgesBase.length}`;
+    badgesBase.forEach(b=>{
+        const img=document.createElement('img');
+        img.className='active-emblem-item';
+        img.src=b.data;
+        img.alt=b.id;
+        if(activeBadges.some(a=>a.id===b.id)) img.classList.add('active');
+        img.addEventListener('click',()=>{
+            if(activeBadges.some(a=>a.id===b.id)) activeBadges=activeBadges.filter(a=>a.id!==b.id);
+            else activeBadges.push(b);
+            saveActiveBadges();
+            refreshEmblemGrid();
+            render();
+        });
+        emblemGrid.appendChild(img);
+    });
+}
+
+usernameEl.addEventListener('input',render);
+messageEl.addEventListener('input',render);
+
+bgDarkBtn.addEventListener('click',()=>updateBackground('dark'));
+bgLightBtn.addEventListener('click',()=>updateBackground('light'));
+
+colorSwatches.forEach(s=>{
+    s.addEventListener('click',()=>{
+        colorSwatches.forEach(c=>c.classList.remove('selected'));
+        s.classList.add('selected');
+        activeColor=s.dataset.color;
+        render();
+    });
+});
+
+saveCommentBtn.addEventListener('click',async()=>{
+    render();
+    if(!previewEl.firstChild) return;
+    const canvas=await html2canvas(previewEl.firstChild,{backgroundColor:null,scale:2});
+    const data=canvas.toDataURL('image/png');
+    const a=document.createElement('a');
+    a.href=data;
+    a.download='message.png';
+    a.click();
+});
+
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function render(){
+    const name=escapeHtml(usernameEl.value||'test');
+    const messageText=escapeHtml(messageEl.value||'message');
+    const parts=messageText.replace(/\n/g,'<br>');
+    const badgeHtml=activeBadges.map(b=>`<img class="badge" src="${b.data}">`).join('');
+    const bgClass=activeBackground==='light'?'light-bg':'';
+    previewEl.innerHTML=`
+        <div class="chat-line ${bgClass}">
+            <div class="badges">${badgeHtml}</div>
+            <span class="username" style="color:${activeColor}">${name}</span>: <span class="message">${parts}</span>
+        </div>`;
+}
+
+function updateBackground(style){
+    activeBackground=style;
+    saveBackground();
+    bgDarkBtn.classList.toggle('selected',style==='dark');
+    bgLightBtn.classList.toggle('selected',style==='light');
+    render();
+}
+
+// Inicjalizacja
+initializeLocalEmblems();
+updateBackground(activeBackground);
+render();
+</script>
+</body>
+</html>
