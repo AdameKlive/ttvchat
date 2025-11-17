@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 body { margin:0; font-family:Inter,sans-serif; background:#0e0e10; color:white; }
-.container { max-width:1200px; margin:20px auto; display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+.container { max-width:1400px; margin:20px auto; display:flex; gap:20px; flex-wrap:wrap; justify-content:flex-start; }
 .control-column { width:320px; display:flex; flex-direction:column; gap:20px; padding:20px; background:transparent; border-radius:12px; }
 .controls-block { display:flex; flex-direction:column; gap:12px; background:rgba(24,24,27,0.8); padding:15px; border-radius:10px; }
 .controls-block h3 { margin:0 0 10px 0; color:#fff; font-size:16px; font-weight:600; text-align:left; }
@@ -30,10 +30,12 @@ button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 .chat-line.light-bg .message { color:#000; }
 .badges { display:inline-flex; align-items:center; gap:2px; margin-right:5px; }
 .badge { width:18px; height:18px; object-fit:contain; }
-.chat-emote { width:20px; height:20px; vertical-align:middle; object-fit:contain; cursor:pointer; }
+.chat-emote { width:24px; height:24px; vertical-align:middle; object-fit:contain; cursor:pointer; }
 .username { font-weight:700; display:inline-flex; align-items:center; line-height:18px; vertical-align:middle; }
 .message { word-break:break-word; display:inline; }
 #message-controls-block { background-color:transparent; padding:0; }
+#emotesSidebar { width:240px; display:flex; flex-direction:column; gap:10px; }
+#emotesGridContainer { display:grid; grid-template-columns: repeat(6,1fr); gap:6px; max-height:500px; overflow-y:auto; background:rgba(18,18,20,0.7); border-radius:6px; padding:6px; }
 </style>
 </head>
 <body>
@@ -46,9 +48,7 @@ button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 <div id="limitMessage"></div>
 <div class="grid-select" id="emblemGrid"></div>
 </div>
-</div>
 
-<div class="control-column">
 <div class="controls-block">
 <h3>Username Colors</h3>
 <div class="grid-select" style="grid-template-columns:repeat(4,1fr);">
@@ -65,6 +65,7 @@ button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 <div class="color-swatch" style="background-color:#00ccff" data-color="#00ccff"></div>
 <div class="color-swatch" style="background-color:#ff4500" data-color="#ff4500"></div>
 </div>
+
 <h3>Message Background</h3>
 <div style="display:flex;gap:10px;">
 <button id="bgDarkBtn" class="bg-btn" style="flex:1">Dark</button>
@@ -82,9 +83,12 @@ button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 <h3>Twitch Channel for Emotes</h3>
 <input id="channelInput" placeholder="Enter channel name">
 <button id="loadChannelEmotesBtn">Load Emotes</button>
-<button id="toggleEmotes">😀 Show Emotes</button>
-<div id="emotesGridContainer" style="display:none; max-height:220px; overflow-y:auto; margin-top:10px;"></div>
 </div>
+</div>
+
+<div id="emotesSidebar">
+<h3>Emotes</h3>
+<div id="emotesGridContainer"></div>
 </div>
 
 </div>
@@ -106,18 +110,16 @@ const colorSwatches=document.querySelectorAll('.color-swatch');
 const saveCommentBtn=document.getElementById('save-comment');
 const channelInput=document.getElementById('channelInput');
 const loadChannelEmotesBtn=document.getElementById('loadChannelEmotesBtn');
-const toggleEmotesBtn=document.getElementById('toggleEmotes');
 const emotesGridContainer=document.getElementById('emotesGridContainer');
 
 let badgesBase=[];
 let activeBadges=[];
 let activeBackground='dark';
 let activeColor='#9147ff';
-
-let globalEmotes = [];
-let channelEmotes = {};
-let currentChannel = '';
-let emotesLoaded = false;
+let globalEmotes=[];
+let channelEmotes={};
+let currentChannel='';
+let emotesLoaded=false;
 
 function uid(){return 'b'+Math.random().toString(36).slice(2,9);}
 
@@ -129,7 +131,6 @@ async function initializeLocalEmblems(){
   refreshEmblemGrid();
   render();
 }
-
 function refreshEmblemGrid(){
     emblemGrid.innerHTML='';
     limitMessage.textContent=`Emblems in base: ${badgesBase.length}`;
@@ -151,23 +152,11 @@ function refreshEmblemGrid(){
 
 // ---- Colors & Background ----
 usernameEl.addEventListener('input',render);
-messageEl.addEventListener('input',render);
+messageEl.addEventListener('input',()=>{ if(messageEl.value.length>300) messageEl.value=messageEl.value.slice(0,300); render(); });
 bgDarkBtn.addEventListener('click',()=>updateBackground('dark'));
 bgLightBtn.addEventListener('click',()=>updateBackground('light'));
-colorSwatches.forEach(s=>{
-    s.addEventListener('click',()=>{
-        colorSwatches.forEach(c=>c.classList.remove('selected'));
-        s.classList.add('selected');
-        activeColor=s.dataset.color;
-        render();
-    });
-});
-function updateBackground(style){
-    activeBackground=style;
-    bgDarkBtn.classList.toggle('selected',style==='dark');
-    bgLightBtn.classList.toggle('selected',style==='light');
-    render();
-}
+colorSwatches.forEach(s=>{ s.addEventListener('click',()=>{ colorSwatches.forEach(c=>c.classList.remove('selected')); s.classList.add('selected'); activeColor=s.dataset.color; render(); }); });
+function updateBackground(style){ activeBackground=style; bgDarkBtn.classList.toggle('selected',style==='dark'); bgLightBtn.classList.toggle('selected',style==='light'); render(); }
 
 // ---- Export PNG ----
 saveCommentBtn.addEventListener('click',async()=>{
@@ -183,89 +172,56 @@ saveCommentBtn.addEventListener('click',async()=>{
 
 // ---- Emotes ----
 function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-async function loadGlobalEmotes(){
-    const res=await fetch('https://api.7tv.app/v2/emotes/global');
-    const data=await res.json();
-    globalEmotes=data.map(e=>({name:e.name,url:e.urls[0][1]}));
-}
-
-async function loadChannelEmotes(channel){
-    if(!channel) return;
-    try {
-        const res=await fetch(`https://api.7tv.app/v2/users/${channel}/emotes`);
-        const data=await res.json();
-        channelEmotes[channel]=data.map(e=>({name:e.name,url:e.urls[0][1]}));
-    } catch(e){
-        channelEmotes[channel]=[];
-    }
-}
+async function loadGlobalEmotes(){ const res=await fetch('https://api.7tv.app/v2/emotes/global'); const data=await res.json(); globalEmotes=data.map(e=>({name:e.name,url:e.urls[0][1]})); }
+async function loadChannelEmotes(channel){ if(!channel) return; try{ const res=await fetch(`https://api.7tv.app/v2/users/${channel}/emotes`); const data=await res.json(); channelEmotes[channel]=data.map(e=>({name:e.name,url:e.urls[0][1]})); }catch(e){ channelEmotes[channel]=[]; } }
 
 loadChannelEmotesBtn.addEventListener('click', async()=>{
     currentChannel = channelInput.value.trim().toLowerCase();
-    if(currentChannel){
-        await loadChannelEmotes(currentChannel);
-        emotesLoaded = false;
-        render();
-        emotesGridContainer.style.display='none';
-    }
+    if(currentChannel){ await loadChannelEmotes(currentChannel); emotesLoaded=false; render(); emotesGridContainer.innerHTML=''; }
 });
 
-toggleEmotesBtn.addEventListener('click', async ()=>{
-    if(!emotesLoaded){
-        const allEmotes = [...globalEmotes];
-        if(currentChannel && channelEmotes[currentChannel]) allEmotes.push(...channelEmotes[currentChannel]);
-        emotesGridContainer.innerHTML = '';
-        allEmotes.forEach(e=>{
-            const img=document.createElement('img');
-            img.src=e.url;
-            img.alt=e.name;
-            img.className='chat-emote';
-            img.addEventListener('click', ()=>{
-                messageEl.value += ` ${e.name} `;
-                if(messageEl.value.length>300) messageEl.value=messageEl.value.slice(0,300);
-                render();
-            });
-            emotesGridContainer.appendChild(img);
-        });
-        emotesLoaded = true;
-    }
-    emotesGridContainer.style.display = emotesGridContainer.style.display==='none' ? 'block' : 'none';
-});
+function renderEmotesGrid(){
+    if(emotesLoaded) return;
+    const allEmotes=[...globalEmotes];
+    if(currentChannel && channelEmotes[currentChannel]) allEmotes.push(...channelEmotes[currentChannel]);
+    emotesGridContainer.innerHTML='';
+    allEmotes.forEach(e=>{
+        const img=document.createElement('img');
+        img.src=e.url; img.alt=e.name; img.className='chat-emote';
+        img.addEventListener('click',()=>{ messageEl.value += ` ${e.name} `; if(messageEl.value.length>300) messageEl.value=messageEl.value.slice(0,300); render(); });
+        emotesGridContainer.appendChild(img);
+    });
+    emotesLoaded=true;
+}
 
 function parseEmotes(message){
-    let parsed = escapeHtml(message);
-    const emotes = [...globalEmotes];
+    let parsed=escapeHtml(message);
+    const emotes=[...globalEmotes];
     if(currentChannel && channelEmotes[currentChannel]) emotes.push(...channelEmotes[currentChannel]);
     emotes.forEach(e=>{
         const regex=new RegExp(`\\b${e.name}\\b`,'g');
-        parsed = parsed.replace(regex, `<img class="chat-emote" src="${e.url}" alt="${e.name}">`);
+        parsed=parsed.replace(regex, `<img class="chat-emote" src="${e.url}" alt="${e.name}">`);
     });
     return parsed.replace(/\n/g,'<br>');
 }
 
-// ---- Render ----
 function render(){
     const name=escapeHtml(usernameEl.value||'test');
     let messageText=messageEl.value||'message';
     if(messageText.length>300) messageText=messageText.slice(0,300);
-    messageEl.value = messageText;
+    messageEl.value=messageText;
     const parts=parseEmotes(messageText);
     const badgeHtml=activeBadges.map(b=>`<img class="badge" src="${b.data}">`).join('');
     const bgClass=activeBackground==='light'?'light-bg':'';
-    previewEl.innerHTML=`
-        <div class="chat-line ${bgClass}">
-            <div class="badges">${badgeHtml}</div>
-            <span class="username" style="color:${activeColor}">${name}</span>: 
-            <span class="message">${parts}</span>
-        </div>`;
+    previewEl.innerHTML=`<div class="chat-line ${bgClass}"><div class="badges">${badgeHtml}</div><span class="username" style="color:${activeColor}">${name}</span>: <span class="message">${parts}</span></div>`;
 }
 
 // ---- Init ----
 initializeLocalEmblems();
 loadGlobalEmotes();
 updateBackground(activeBackground);
-
+render();
+renderEmotesGrid();
 </script>
 </body>
 </html>
