@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Twitch Message Creator</title>
+<title>Local Twitch Message Creator</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
-/* --- Kompletny, spójny CSS --- */
 body {
     margin: 0;
     font-family: Inter, sans-serif;
@@ -70,12 +69,8 @@ body {
     border: 2px solid transparent;
     transition: all 0.2s;
 }
-.color-swatch.selected {
-    border-color: #9147ff;
-}
-.color-swatch:hover {
-    opacity: 0.8;
-}
+.color-swatch.selected { border-color: #9147ff; }
+.color-swatch:hover { opacity: 0.8; }
 
 .active-emblem-item {
     width: 28px;
@@ -86,64 +81,18 @@ body {
     border-radius: 4px;
     transition: all 0.2s;
 }
-.active-emblem-item.active {
-    border-color: #00ff00;
-}
-.active-emblem-item:hover {
-    opacity: 0.8;
-}
+.active-emblem-item.active { border-color: #00ff00; }
+.active-emblem-item:hover { opacity: 0.8; }
 
-input, textarea {
-    width: 100%;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #444;
-    background: #000;
-    color: white;
-    box-sizing: border-box;
-    resize: none;
-}
-input:focus, textarea:focus {
-    border-color: #9147ff;
-    outline: none;
-}
+input, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; resize: none; }
+input:focus, textarea:focus { border-color: #9147ff; outline: none; }
 
-button {
-    padding: 10px 12px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-}
+button { padding: 10px 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; }
+button#save-comment { background: #9147ff; color: #fff; }
+button.bg-btn { border: 1px solid #333; background: #333; color: white; }
+button.bg-btn.selected { border-color: #9147ff; background: #5a3d90; }
 
-button#save-comment,
-button#add-custom-emblem {
-    background: #9147ff;
-    color: #fff;
-}
-
-button.secondary {
-    background: #333;
-    color: #fff;
-}
-
-button.bg-btn {
-    border: 1px solid #333;
-    background: #333;
-    color: white;
-}
-button.bg-btn.selected {
-    border-color: #9147ff;
-    background: #5a3d90;
-}
-
-.bottom-preview-container {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
-}
+.bottom-preview-container { width: 100%; display: flex; justify-content: center; margin-top: 30px; }
 
 .chat-line {
     max-width: 480px;
@@ -157,45 +106,38 @@ button.bg-btn.selected {
     transition: background 0.2s,color 0.2s;
 }
 
-.chat-line.light-bg {
-    background: #fff;
-    color: #000;
-}
-.chat-line.light-bg .message {
-    color: #000;
-}
+.chat-line.light-bg { background: #fff; color: #000; }
+.chat-line.light-bg .message { color: #000; }
 
 .badges {
     display: inline-flex;
-    align-items: center; /* wyrównanie w pionie */
+    align-items: center;
     gap: 2px;
     margin-right: 5px;
 }
-.badge {
-    width: 18px;
-    height: 18px;
-    object-fit: contain;
-}
+
+.badge { width: 18px; height: 18px; object-fit: contain; }
+
+.chat-emote { width: 20px; height: 20px; vertical-align: middle; }
+
 .username {
     font-weight: 700;
     display: inline-flex;
-    align-items: center; /* wyrównanie w pionie względem badge */
-    line-height: 18px; /* dopasowanie wysokości do badge */
+    align-items: center;
+    line-height: 18px;
     vertical-align: middle;
 }
-.message {
-    word-break: break-word;
-    display: inline;
-}
 
-#message-controls-block {
-    background-color: transparent;
-    padding: 0;
-}
+.message { word-break: break-word; display: inline; }
+
+#message-controls-block { background-color: transparent; padding: 0; }
+
 </style>
 </head>
 <body>
+
 <div class="container">
+
 <div class="control-column">
 <div class="controls-block">
 <h3>Emblems Base</h3>
@@ -235,9 +177,12 @@ button.bg-btn.selected {
 <input id="username" value="test">
 <h3>Message Text</h3>
 <textarea id="message" rows="5">Testowy komunikat.</textarea>
+<h3>Twitch Channel for Emotes</h3>
+<input id="channelInput" placeholder="Enter channel name">
 <button id="save-comment">Export PNG</button>
 </div>
 </div>
+
 </div>
 
 <div class="bottom-preview-container"><div id="preview"></div></div>
@@ -252,14 +197,20 @@ const bgDarkBtn=document.getElementById('bgDarkBtn');
 const bgLightBtn=document.getElementById('bgLightBtn');
 const colorSwatches=document.querySelectorAll('.color-swatch');
 const saveCommentBtn=document.getElementById('save-comment');
+const channelInput=document.getElementById('channelInput');
 
 let badgesBase=[];
 let activeBadges=[];
 let activeBackground='dark';
 let activeColor='#9147ff';
 
+let globalEmotes = [];
+let channelEmotes = {};
+let currentChannel = '';
+
 function uid(){return 'b'+Math.random().toString(36).slice(2,9);}
 
+// ---- Emblems ----
 async function initializeLocalEmblems(){
   const response=await fetch('emblems.json');
   const files=await response.json();
@@ -292,9 +243,9 @@ function refreshEmblemGrid(){
     });
 }
 
+// ---- Colors & Background ----
 usernameEl.addEventListener('input',render);
 messageEl.addEventListener('input',render);
-
 bgDarkBtn.addEventListener('click',()=>updateBackground('dark'));
 bgLightBtn.addEventListener('click',()=>updateBackground('light'));
 
@@ -307,6 +258,14 @@ colorSwatches.forEach(s=>{
     });
 });
 
+function updateBackground(style){
+    activeBackground=style;
+    bgDarkBtn.classList.toggle('selected',style==='dark');
+    bgLightBtn.classList.toggle('selected',style==='light');
+    render();
+}
+
+// ---- Export PNG ----
 saveCommentBtn.addEventListener('click',async()=>{
     render();
     if(!previewEl.firstChild) return;
@@ -318,36 +277,65 @@ saveCommentBtn.addEventListener('click',async()=>{
     a.click();
 });
 
+// ---- Emotes ----
 function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+async function loadGlobalEmotes(){
+    const res=await fetch('https://api.7tv.app/v2/emotes/global');
+    const data=await res.json();
+    globalEmotes=data.map(e=>({name:e.name,url:e.urls[0][1]}));
+}
+
+async function loadChannelEmotes(channel){
+    if(!channel) return;
+    try {
+        const res=await fetch(`https://api.7tv.app/v2/users/${channel}/emotes`);
+        const data=await res.json();
+        channelEmotes[channel]=data.map(e=>({name:e.name,url:e.urls[0][1]}));
+    } catch(e){
+        channelEmotes[channel]=[];
+    }
+}
+
+channelInput.addEventListener('change', async()=>{
+    currentChannel = channelInput.value.trim().toLowerCase();
+    if(currentChannel){
+        await loadChannelEmotes(currentChannel);
+        render();
+    }
+});
+
+function parseEmotes(message){
+    let parsed = escapeHtml(message);
+    const emotes = [...globalEmotes];
+    if(currentChannel && channelEmotes[currentChannel]) emotes.push(...channelEmotes[currentChannel]);
+    emotes.forEach(e=>{
+        const regex=new RegExp(`\\b${e.name}\\b`,'g');
+        parsed = parsed.replace(regex, `<img class="chat-emote" src="${e.url}" alt="${e.name}">`);
+    });
+    return parsed.replace(/\n/g,'<br>');
+}
+
+// ---- Render ----
 function render(){
     const name=escapeHtml(usernameEl.value||'test');
-    const messageText=escapeHtml(messageEl.value||'message');
-    const parts=messageText.replace(/\n/g,'<br>');
-
-    // activeBadges są unikalne w pamięci, więc bez dodatkowego filtrowania
+    const messageText=messageEl.value||'message';
+    const parts=parseEmotes(messageText);
     const badgeHtml=activeBadges.map(b=>`<img class="badge" src="${b.data}">`).join('');
     const bgClass=activeBackground==='light'?'light-bg':'';
-
     previewEl.innerHTML=`
         <div class="chat-line ${bgClass}">
             <div class="badges">${badgeHtml}</div>
-            <span class="username" style="color:${activeColor}">${name}</span>: <span class="message">${parts}</span>
+            <span class="username" style="color:${activeColor}">${name}</span>: 
+            <span class="message">${parts}</span>
         </div>`;
 }
 
-function updateBackground(style){
-    activeBackground=style;
-    bgDarkBtn.classList.toggle('selected',style==='dark');
-    bgLightBtn.classList.toggle('selected',style==='light');
-    render();
-}
-
-// Inicjalizacja
+// ---- Init ----
 initializeLocalEmblems();
+loadGlobalEmotes();
 updateBackground(activeBackground);
+
 </script>
 </body>
 </html>
-
-
