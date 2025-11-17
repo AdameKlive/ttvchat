@@ -3,168 +3,166 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Local Twitch Message Creator</title>
+<title>Twitch Message Creator</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 body {
-  margin:0;
-  font-family:Inter,sans-serif;
-  background:#0e0e10;
-  color:white;
-  display:flex;
-  height:100vh;
-  padding:10px;
-  box-sizing:border-box;
-  gap:10px;
+    margin: 0;
+    font-family: Inter, sans-serif;
+    background: #0e0e10;
+    color: white;
 }
-
-/* Kolumna główna */
-#main-controls {
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
+#controls-wrapper{
+    display:flex;
+    gap:20px;
+    max-width:1200px;
+    margin:20px auto;
 }
-
-/* Kolumna badge */
-#badge-column {
-  width:250px;
-  display:flex;
-  flex-direction:column;
+.control-column{
+    width:320px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+    padding:20px;
 }
-
-/* Kontrolki */
-.controls-block {
-  background:rgba(24,24,27,0.8);
-  padding:10px;
-  border-radius:8px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
+.controls-block{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    background:rgba(24,24,27,0.8);
+    padding:15px;
+    border-radius:10px;
 }
-
+.controls-block h3{
+    margin:0 0 10px 0;
+    color:#fff;
+    font-size:16px;
+    font-weight:600;
+}
 input,textarea{
-  width:100%;
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #444;
-  background:#000;
-  color:white;
-  resize:none;
-  box-sizing:border-box;
+    width:100%;
+    padding:10px;
+    border-radius:6px;
+    border:1px solid #444;
+    background:#000;
+    color:white;
+    box-sizing:border-box;
+    resize:none;
 }
-textarea{max-height:100px;}
-
 button{
-  padding:8px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
+    padding:10px 12px;
+    border:none;
+    border-radius:8px;
+    font-weight:600;
+    cursor:pointer;
+    width:100%;
 }
-
-/* Podgląd */
+button#save-comment{
+    background:#9147ff;
+    color:white;
+}
 #preview-container{
-  border:1px solid #333;
-  padding:10px;
-  border-radius:8px;
-  margin-top:10px;
-  min-height:60px;
+    border:1px solid #333;
+    padding:10px;
+    border-radius:8px;
+    margin-top:10px;
+    min-height:60px;
 }
-
 .chat-line{
-  background:#000;
-  border-radius:6px;
-  padding:8px;
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
+    max-width:480px;
+    padding:10px 15px;
+    border-radius:8px;
+    background:#000;
+    font-size:16px;
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
 }
-.chat-line.light-bg{background:#fff;color:#000;}
-
+.chat-line.light-bg{
+    background:#fff;
+    color:#000;
+}
 .badges{
-  display:inline-flex;
-  align-items:center;
-  gap:3px;
-  margin-right:5px;
+    display:inline-flex;
+    align-items:center;
+    gap:3px;
 }
-.badge{width:20px;height:20px;}
-.username{font-weight:700;}
-.message{word-break:break-word;}
-
-/* Grid badge */
+.badge{
+    width:20px;
+    height:20px;
+}
+.username{
+    font-weight:700;
+}
+.message{
+    word-break:break-word;
+}
 #badge-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:5px;
-  overflow-y:auto;
-  max-height:300px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:5px;
+    max-height:300px;
+    overflow-y:auto;
 }
 .badge-item{
-  width:32px;
-  height:32px;
-  cursor:pointer;
-  border:1px solid transparent;
-  border-radius:4px;
+    width:32px;
+    height:32px;
+    cursor:pointer;
+    border:1px solid transparent;
+    border-radius:4px;
 }
 .badge-item:hover{
-  border-color:#9147ff;
-}
-
-#controls-wrapper{
-  display:flex;
-  gap:10px;
-  flex:1;
+    border-color:#9147ff;
 }
 </style>
 </head>
 <body>
-
 <div id="controls-wrapper">
-  <!-- Główne kontrolki -->
-  <div id="main-controls">
-    <div class="controls-block">
-      <h3>Username</h3>
-      <input id="username" value="test">
-      <h3>Message (max 300 znaków)</h3>
-      <textarea id="message" rows="4" maxlength="300">Testowy komunikat.</textarea>
-      <div id="preview-container"><div id="preview"></div></div>
-      <button id="save-comment">Export PNG</button>
-    </div>
-  </div>
 
-  <!-- Badge column -->
-  <div id="badge-column">
-    <div class="controls-block">
-      <h3>Badges</h3>
-      <div id="badge-grid"></div>
-    </div>
-  </div>
+<div class="control-column">
+<div class="controls-block">
+<h3>Username</h3>
+<input id="username" value="test">
+<h3>Message Text (max 300 znaków)</h3>
+<textarea id="message" rows="5" maxlength="300">Testowy komunikat.</textarea>
+<div id="preview-container"><div id="preview"></div></div>
+<button id="save-comment">Export PNG</button>
+</div>
+</div>
+
+<div class="control-column">
+<div class="controls-block">
+<h3>Badges</h3>
+<div id="badge-grid"></div>
+</div>
+</div>
+
 </div>
 
 <script>
-const usernameEl = document.getElementById('username');
-const messageEl = document.getElementById('message');
-const previewEl = document.getElementById('preview');
-const saveCommentBtn = document.getElementById('save-comment');
-const badgeGrid = document.getElementById('badge-grid');
+const usernameEl=document.getElementById('username');
+const messageEl=document.getElementById('message');
+const previewEl=document.getElementById('preview');
+const saveCommentBtn=document.getElementById('save-comment');
+const badgeGrid=document.getElementById('badge-grid');
 
-let badgesBase = [
-  // {id:'b1', data:'Badges/mod.png'}
+let badgesBase=[
+  // Przykładowy badge: {id:'b1', data:'Badges/mod.png'}
 ];
-let activeBadges = [];
+let activeBadges=[];
 
 function uid(){return 'b'+Math.random().toString(36).slice(2,9);}
 
 function renderBadgesGrid(){
   badgeGrid.innerHTML='';
   badgesBase.forEach(b=>{
-    const img = document.createElement('img');
-    img.src = b.data;
-    img.alt = b.id;
-    img.className = 'badge-item';
+    const img=document.createElement('img');
+    img.src=b.data;
+    img.alt=b.id;
+    img.className='badge-item';
     if(activeBadges.some(a=>a.id===b.id)) img.style.borderColor='#00ff00';
-    img.addEventListener('click', ()=>{
-      if(activeBadges.some(a=>a.id===b.id)) activeBadges = activeBadges.filter(a=>a.id!==b.id);
+    img.addEventListener('click',()=>{
+      if(activeBadges.some(a=>a.id===b.id)) activeBadges=activeBadges.filter(a=>a.id!==b.id);
       else activeBadges.push(b);
       renderBadgesGrid();
       render();
@@ -176,23 +174,23 @@ function renderBadgesGrid(){
 function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 function render(){
-  const name = escapeHtml(usernameEl.value||'test');
-  let msg = escapeHtml(messageEl.value||'');
-  if(msg.length>300) msg = msg.slice(0,300);
-  const badgeHtml = activeBadges.map(b=>`<img class="badge" src="${b.data}">`).join('');
-  previewEl.innerHTML = `<div class="chat-line"><div class="badges">${badgeHtml}</div><span class="username">${name}</span>: <span class="message">${msg}</span></div>`;
+  const name=escapeHtml(usernameEl.value||'test');
+  let msg=escapeHtml(messageEl.value||'');
+  if(msg.length>300) msg=msg.slice(0,300);
+  const badgeHtml=activeBadges.map(b=>`<img class="badge" src="${b.data}">`).join('');
+  previewEl.innerHTML=`<div class="chat-line"><div class="badges">${badgeHtml}</div><span class="username">${name}</span>: <span class="message">${msg}</span></div>`;
 }
 
-usernameEl.addEventListener('input', render);
-messageEl.addEventListener('input', render);
+usernameEl.addEventListener('input',render);
+messageEl.addEventListener('input',render);
 
 saveCommentBtn.addEventListener('click', async()=>{
   render();
   if(!previewEl.firstChild) return;
-  const canvas = await html2canvas(previewEl.firstChild,{backgroundColor:null,scale:2});
-  const data = canvas.toDataURL('image/png');
-  const a = document.createElement('a');
-  a.href = data;
+  const canvas=await html2canvas(previewEl.firstChild,{backgroundColor:null,scale:2});
+  const data=canvas.toDataURL('image/png');
+  const a=document.createElement('a');
+  a.href=data;
   a.download='message.png';
   a.click();
 });
