@@ -6,7 +6,6 @@
 <title>Twitch Message Creator</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
-/* --- Kompletny, spójny CSS --- */
 body {
     margin: 0;
     font-family: Inter, sans-serif;
@@ -117,14 +116,8 @@ button {
     width: 100%;
 }
 
-button#save-comment,
-button#add-custom-emblem {
+button#save-comment {
     background: #9147ff;
-    color: #fff;
-}
-
-button.secondary {
-    background: #333;
     color: #fff;
 }
 
@@ -167,7 +160,7 @@ button.bg-btn.selected {
 
 .badges {
     display: inline-flex;
-    align-items: center; /* wyrównanie w pionie */
+    align-items: center;
     gap: 2px;
     margin-right: 5px;
 }
@@ -181,8 +174,8 @@ button.bg-btn.selected {
 .username {
     font-weight: 700;
     display: inline-flex;
-    align-items: center; /* wyrównanie w pionie względem badge */
-    line-height: 18px; /* dopasowanie wysokości do badge */
+    align-items: center;
+    line-height: 18px;
     vertical-align: middle;
 }
 
@@ -215,7 +208,7 @@ button.bg-btn.selected {
 <div class="color-swatch" style="background-color:#00ff00" data-color="#00ff00"></div>
 <div class="color-swatch" style="background-color:#0000ff" data-color="#0000ff"></div>
 <div class="color-swatch" style="background-color:#ff8c00" data-color="#ff8c00"></div>
-<div class="color-swatch" style="background-color:#ffd700" data-color="#ffd700"></div>
+<div a class="color-swatch" style="background-color:#ffd700" data-color="#ffd700"></div>
 <div class="color-swatch" style="background-color:#1eff00" data-color="#1eff00"></div>
 <div class="color-swatch" style="background-color:#00ffcc" data-color="#00ffcc"></div>
 <div class="color-swatch" style="background-color:#f06400" data-color="#f06400"></div>
@@ -277,6 +270,7 @@ function refreshEmblemGrid(){
 
     badgesBase.forEach(b=>{
         const img=document.createElement('img');
+        img.crossOrigin="anonymous";
         img.className='active-emblem-item';
         img.src=b.data;
         img.alt=b.id;
@@ -286,7 +280,7 @@ function refreshEmblemGrid(){
             if(activeBadges.some(a=>a.id===b.id)){
                 activeBadges=activeBadges.filter(a=>a.id!==b.id);
             } else {
-                if(!activeBadges.some(a=>a.id===b.id)) activeBadges.push(b);
+                activeBadges.push(b);
             }
             refreshEmblemGrid();
             render();
@@ -313,7 +307,12 @@ colorSwatches.forEach(s=>{
 saveCommentBtn.addEventListener('click',async()=>{
     render();
     if(!previewEl.firstChild) return;
-    const canvas=await html2canvas(previewEl.firstChild,{backgroundColor:null,scale:2});
+    const canvas=await html2canvas(previewEl.firstChild,{
+        backgroundColor:null,
+        scale:2,
+        useCORS:true,
+        allowTaint:false
+    });
     const data=canvas.toDataURL('image/png');
     const a=document.createElement('a');
     a.href=data;
@@ -321,15 +320,18 @@ saveCommentBtn.addEventListener('click',async()=>{
     a.click();
 });
 
-function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escapeHtml(s){
+    return s.replace(/&/g,'&amp;')
+            .replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;');
+}
 
 function render(){
     const name=escapeHtml(usernameEl.value||'test');
     const messageText=escapeHtml(messageEl.value||'message');
     const parts=messageText.replace(/\n/g,'<br>');
 
-    // activeBadges są unikalne w pamięci, więc bez dodatkowego filtrowania
-    const badgeHtml=activeBadges.map(b=>`<img class="badge" src="${b.data}">`).join('');
+    const badgeHtml=activeBadges.map(b=>`<img class="badge" src="${b.data}" crossOrigin="anonymous">`).join('');
     const bgClass=activeBackground==='light'?'light-bg':'';
 
     previewEl.innerHTML=`
@@ -346,11 +348,8 @@ function updateBackground(style){
     render();
 }
 
-// Inicjalizacja
 initializeLocalEmblems();
 updateBackground(activeBackground);
 </script>
 </body>
 </html>
-
-
