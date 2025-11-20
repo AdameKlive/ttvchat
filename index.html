@@ -1,353 +1,305 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Twitch Message Creator</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Twitch Message Creator — poprawione CORS + diagnostyka</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
-body {
-    margin: 0;
-    font-family: Inter, sans-serif;
-    background: #0e0e10;
-    color: white;
-}
-
-.container {
-    max-width: 1200px;
-    margin: 20px auto;
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.control-column {
-    width: 320px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding: 20px;
-    background: transparent;
-    border-radius: 12px;
-}
-
-.controls-block {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    background: rgba(24,24,27,0.8);
-    padding: 15px;
-    border-radius: 10px;
-}
-
-.controls-block h3 {
-    margin: 0 0 10px 0;
-    color: #fff;
-    font-size: 16px;
-    font-weight: 600;
-    text-align: left;
-}
-
-.grid-select {
-    display: grid;
-    grid-template-columns: repeat(6,1fr);
-    gap: 10px;
-    max-height: 220px;
-    overflow-y: auto;
-    padding: 8px;
-    border: 1px solid #333;
-    border-radius: 6px;
-    background: rgba(18,18,20,0.7);
-}
-
-.color-swatch {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: all 0.2s;
-}
-.color-swatch.selected {
-    border-color: #9147ff;
-}
-.color-swatch:hover {
-    opacity: 0.8;
-}
-
-.active-emblem-item {
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
-    cursor: pointer;
-    border: 2px solid transparent;
-    border-radius: 4px;
-    transition: all 0.2s;
-}
-.active-emblem-item.active {
-    border-color: #00ff00;
-}
-.active-emblem-item:hover {
-    opacity: 0.8;
-}
-
-input, textarea {
-    width: 100%;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #444;
-    background: #000;
-    color: white;
-    box-sizing: border-box;
-    resize: none;
-}
-input:focus, textarea:focus {
-    border-color: #9147ff;
-    outline: none;
-}
-
-button {
-    padding: 10px 12px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-}
-
-button#save-comment {
-    background: #9147ff;
-    color: #fff;
-}
-
-button.bg-btn {
-    border: 1px solid #333;
-    background: #333;
-    color: white;
-}
-button.bg-btn.selected {
-    border-color: #9147ff;
-    background: #5a3d90;
-}
-
-.bottom-preview-container {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-top: 30px;
-}
-
-.chat-line {
-    max-width: 480px;
-    padding: 10px 15px;
-    border-radius: 8px;
-    background: #000;
-    font-size: 16px;
-    display: inline-block;
-    text-align: left;
-    overflow-wrap: break-word;
-    transition: background 0.2s,color 0.2s;
-}
-
-.chat-line.light-bg {
-    background: #fff;
-    color: #000;
-}
-.chat-line.light-bg .message {
-    color: #000;
-}
-
-.badges {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    margin-right: 5px;
-}
-
-.badge {
-    width: 18px;
-    height: 18px;
-    object-fit: contain;
-}
-
-.username {
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    line-height: 18px;
-    vertical-align: middle;
-}
-
-.message {
-    word-break: break-word;
-    display: inline;
-}
-
-#message-controls-block {
-    background-color: transparent;
-    padding: 0;
-}
+body { margin:0; font-family:Inter, sans-serif; background:#0e0e10; color:#fff; }
+.container { max-width:1200px; margin:20px auto; display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+.control-column { width:320px; display:flex; flex-direction:column; gap:20px; padding:20px; background:transparent; border-radius:12px; }
+.controls-block { display:flex; flex-direction:column; gap:12px; background:rgba(24,24,27,0.8); padding:15px; border-radius:10px; }
+.controls-block h3 { margin:0 0 10px 0; color:#fff; font-size:16px; font-weight:600; text-align:left; }
+.grid-select { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; max-height:220px; overflow-y:auto; padding:8px; border:1px solid #333; border-radius:6px; background:rgba(18,18,20,0.7); }
+.color-swatch { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all 0.2s; }
+.color-swatch.selected { border-color:#9147ff; }
+.color-swatch:hover { opacity:0.8; }
+.active-emblem-item { width:28px; height:28px; object-fit:contain; cursor:pointer; border:2px solid transparent; border-radius:4px; transition:all 0.2s; }
+.active-emblem-item.active { border-color:#00ff00; }
+.active-emblem-item:hover { opacity:0.8; }
+input, textarea { width:100%; padding:10px; border-radius:6px; border:1px solid #444; background:#000; color:#fff; box-sizing:border-box; resize:none; }
+input:focus, textarea:focus { border-color:#9147ff; outline:none; }
+button { padding:10px 12px; border:none; border-radius:8px; font-weight:600; cursor:pointer; width:100%; }
+button#save-comment { background:#9147ff; color:#fff; }
+button.secondary { background:#333; color:#fff; }
+button.bg-btn { border:1px solid #333; background:#333; color:white; }
+button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
+.bottom-preview-container { width:100%; display:flex; justify-content:center; margin-top:30px; }
+.chat-line { max-width:480px; padding:10px 15px; border-radius:8px; background:#000; font-size:16px; display:inline-block; text-align:left; overflow-wrap:break-word; transition:background 0.2s,color 0.2s; }
+.chat-line.light-bg { background:#fff; color:#000; }
+.chat-line.light-bg .message { color:#000; }
+.badges { display:inline-flex; align-items:center; gap:2px; margin-right:5px; }
+.badge { width:18px; height:18px; object-fit:contain; }
+.username { font-weight:700; display:inline-flex; align-items:center; line-height:18px; vertical-align:middle; }
+.message { word-break:break-word; display:inline; }
+#message-controls-block { background-color:transparent; padding:0; }
+#status { font-size:13px; color:#ffd; margin-top:8px; }
+#status .error { color:#ff7373; }
+#status .ok { color:#7bff9a; }
+.tainted-list { font-size:13px; color:#ffb3b3; margin-top:6px; max-height:120px; overflow:auto; border:1px dashed #550000; padding:6px; border-radius:6px; background:rgba(50,0,0,0.15); }
 </style>
 </head>
 <body>
 <div class="container">
-<div class="control-column">
-<div class="controls-block">
-<h3>Emblems Base</h3>
-<div id="limitMessage"></div>
-<div class="grid-select" id="emblemGrid"></div>
-</div>
-</div>
+  <div class="control-column">
+    <div class="controls-block">
+      <h3>Emblems Base</h3>
+      <div id="limitMessage"></div>
+      <div class="grid-select" id="emblemGrid"></div>
+      <div id="status"></div>
+      <div id="taintedContainer" class="tainted-list" style="display:none;"></div>
+    </div>
+  </div>
 
-<div class="control-column">
-<div class="controls-block">
-<h3>Username Colors</h3>
-<div class="grid-select" style="grid-template-columns:repeat(4,1fr);">
-<div class="color-swatch" style="background-color:#ff0000" data-color="#ff0000"></div>
-<div class="color-swatch" style="background-color:#00ff00" data-color="#00ff00"></div>
-<div class="color-swatch" style="background-color:#0000ff" data-color="#0000ff"></div>
-<div class="color-swatch" style="background-color:#ff8c00" data-color="#ff8c00"></div>
-<div a class="color-swatch" style="background-color:#ffd700" data-color="#ffd700"></div>
-<div class="color-swatch" style="background-color:#1eff00" data-color="#1eff00"></div>
-<div class="color-swatch" style="background-color:#00ffcc" data-color="#00ffcc"></div>
-<div class="color-swatch" style="background-color:#f06400" data-color="#f06400"></div>
-<div class="color-swatch" style="background-color:#ff69b4" data-color="#ff69b4"></div>
-<div class="color-swatch" style="background-color:#9147ff" data-color="#9147ff"></div>
-<div class="color-swatch" style="background-color:#00ccff" data-color="#00ccff"></div>
-<div class="color-swatch" style="background-color:#ff4500" data-color="#ff4500"></div>
-</div>
-<h3>Message Background</h3>
-<div style="display:flex;gap:10px;">
-<button id="bgDarkBtn" class="bg-btn" style="flex:1">Dark</button>
-<button id="bgLightBtn" class="bg-btn" style="flex:1">Light</button>
-</div>
-</div>
-</div>
+  <div class="control-column">
+    <div class="controls-block">
+      <h3>Username Colors</h3>
+      <div class="grid-select" style="grid-template-columns:repeat(4,1fr);">
+        <div class="color-swatch" style="background-color:#ff0000" data-color="#ff0000"></div>
+        <div class="color-swatch" style="background-color:#00ff00" data-color="#00ff00"></div>
+        <div class="color-swatch" style="background-color:#0000ff" data-color="#0000ff"></div>
+        <div class="color-swatch" style="background-color:#ff8c00" data-color="#ff8c00"></div>
+        <div class="color-swatch" style="background-color:#ffd700" data-color="#ffd700"></div>
+        <div class="color-swatch" style="background-color:#1eff00" data-color="#1eff00"></div>
+        <div class="color-swatch" style="background-color:#00ffcc" data-color="#00ffcc"></div>
+        <div class="color-swatch" style="background-color:#f06400" data-color="#f06400"></div>
+        <div class="color-swatch" style="background-color:#ff69b4" data-color="#ff69b4"></div>
+        <div class="color-swatch" style="background-color:#9147ff" data-color="#9147ff"></div>
+        <div class="color-swatch" style="background-color:#00ccff" data-color="#00ccff"></div>
+        <div class="color-swatch" style="background-color:#ff4500" data-color="#ff4500"></div>
+      </div>
 
-<div class="control-column">
-<div class="controls-block" id="message-controls-block">
-<h3>Username</h3>
-<input id="username" value="test">
-<h3>Message Text</h3>
-<textarea id="message" rows="5" maxlength="300">Testowy komunikat.</textarea>
-<button id="save-comment">Export PNG</button>
-</div>
-</div>
+      <h3>Message Background</h3>
+      <div style="display:flex;gap:10px;">
+        <button id="bgDarkBtn" class="bg-btn" style="flex:1">Dark</button>
+        <button id="bgLightBtn" class="bg-btn" style="flex:1">Light</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="control-column">
+    <div class="controls-block" id="message-controls-block">
+      <h3>Username</h3>
+      <input id="username" value="test" />
+      <h3>Message Text</h3>
+      <textarea id="message" rows="5" maxlength="300">Testowy komunikat.</textarea>
+      <button id="save-comment">Export PNG</button>
+    </div>
+  </div>
 </div>
 
 <div class="bottom-preview-container"><div id="preview"></div></div>
 
 <script>
-const usernameEl=document.getElementById('username');
-const messageEl=document.getElementById('message');
-const previewEl=document.getElementById('preview');
-const emblemGrid=document.getElementById('emblemGrid');
-const limitMessage=document.getElementById('limitMessage');
-const bgDarkBtn=document.getElementById('bgDarkBtn');
-const bgLightBtn=document.getElementById('bgLightBtn');
-const colorSwatches=document.querySelectorAll('.color-swatch');
-const saveCommentBtn=document.getElementById('save-comment');
+const usernameEl = document.getElementById('username');
+const messageEl = document.getElementById('message');
+const previewEl = document.getElementById('preview');
+const emblemGrid = document.getElementById('emblemGrid');
+const limitMessage = document.getElementById('limitMessage');
+const statusEl = document.getElementById('status');
+const taintedContainer = document.getElementById('taintedContainer');
+const bgDarkBtn = document.getElementById('bgDarkBtn');
+const bgLightBtn = document.getElementById('bgLightBtn');
+const colorSwatches = document.querySelectorAll('.color-swatch');
+const saveCommentBtn = document.getElementById('save-comment');
 
-let badgesBase=[];
-let activeBadges=[];
-let activeBackground='dark';
-let activeColor='#9147ff';
+let badgesBase = [];      // { id, srcOriginal, srcUse (objectURL or original), tainted:bool }
+let activeBadges = [];
+let activeBackground = 'dark';
+let activeColor = '#9147ff';
 
-function uid(){return 'b'+Math.random().toString(36).slice(2,9);}
+function uid(){ return 'b'+Math.random().toString(36).slice(2,9); }
 
 async function initializeLocalEmblems(){
-  const response=await fetch('emblems.json');
-  const files=await response.json();
-  badgesBase=files.map(src=>({id:uid(),data:src}));
-  refreshEmblemGrid();
-  render();
+  // Pobierz listę plików z emblems.json (tablica URL-i / ścieżek)
+  statusEl.textContent = 'Ładowanie emblems.json...';
+  try {
+    const resp = await fetch('emblems.json', {cache:'no-cache'});
+    if(!resp.ok) throw new Error('emblems.json HTTP ' + resp.status);
+    const files = await resp.json();
+    if(!Array.isArray(files)) throw new Error('emblems.json musi zawierać tablicę URL-i');
+    limitMessage.textContent = `Emblems in base: ${files.length}`;
+    // Dla każdego URL spróbuj fetch->blob (najlepiej, jeśli CORS OK) i test canvas
+    const loadPromises = files.map(async (url)=>{
+      const id = uid();
+      let srcUse = url;
+      let tainted = true;
+      // 1) spróbuj fetch -> blob -> objectURL
+      try {
+        const f = await fetch(url, {mode:'cors'});
+        if(f.ok){
+          const blob = await f.blob();
+          // utwórz objectURL, użyj tego do rysowania; objectURL będzie z tej samej origin w kontekście przeglądarki
+          srcUse = URL.createObjectURL(blob);
+        } else {
+          // fetch zwrócił status, ale nie 2xx — zostaw oryginał i daj szansę innemu testowi
+          srcUse = url;
+        }
+      } catch(e){
+        // fetch nie powiódł się (CORS/NETWORK) — zostaw oryginalny URL i spróbuj załadować jako <img crossorigin>
+        srcUse = url;
+      }
+      // 2) Załaduj tymczasowo i przetestuj czy da się z niego zrobić dataURL (czy jest tainted)
+      try {
+        const img = await loadImageElement(srcUse);
+        // test draw
+        const can = document.createElement('canvas');
+        can.width = Math.max(1, img.naturalWidth);
+        can.height = Math.max(1, img.naturalHeight);
+        const ctx = can.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        // próba toDataURL
+        try {
+          can.toDataURL('image/png');
+          tainted = false;
+        } catch(err){
+          tainted = true;
+        }
+        // zwolnij objectURL jeśli został utworzony
+        if(srcUse.startsWith('blob:')) {
+          // nie usuwamy od razu jeśli planujemy używać tej objectURL dłużej — tutaj usuniemy dopiero przy unload
+        }
+      } catch(e){
+        // nie udało się załadować obrazu — oznacz jako tainted
+        tainted = true;
+      }
+      return { id, srcOriginal: url, srcUse, tainted };
+    });
+
+    badgesBase = await Promise.all(loadPromises);
+    // Wyświetl w gridzie i status
+    refreshEmblemGrid();
+    renderStatus();
+    render();
+  } catch(err){
+    statusEl.innerHTML = `<span class="error">Błąd ładowania emblems.json: ${err.message}</span>`;
+    console.error(err);
+  }
+}
+
+function loadImageElement(src){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    // ustaw crossorigin - przy użyciu objectURL nie ma znaczenia, przy zewnętrznych serwerach spróbuje zażądać CORS
+    img.crossOrigin = 'anonymous';
+    img.onload = ()=>resolve(img);
+    img.onerror = (e)=>reject(new Error('Nie załadowano obrazu: ' + src));
+    img.src = src;
+    // jeśli src jest objectURL i już blob, to crossOrigin nie wpływa
+    // timeout ochronny
+    setTimeout(()=>reject(new Error('timeout loading image: ' + src)), 8000);
+  });
 }
 
 function refreshEmblemGrid(){
-    emblemGrid.innerHTML='';
-    limitMessage.textContent=`Emblems in base: ${badgesBase.length}`;
+  emblemGrid.innerHTML = '';
+  limitMessage.textContent = `Emblems in base: ${badgesBase.length}`;
+  badgesBase.forEach(b=>{
+    const img = document.createElement('img');
+    img.className = 'active-emblem-item';
+    img.src = b.srcUse;
+    img.alt = b.id;
+    img.title = (b.tainted ? 'TAINTED — CORS problem' : 'OK');
+    if(activeBadges.some(a=>a.id===b.id)) img.classList.add('active');
+    if(b.tainted) img.style.filter = 'grayscale(60%) contrast(0.9)';
 
-    badgesBase.forEach(b=>{
-        const img=document.createElement('img');
-        img.crossOrigin="anonymous";
-        img.className='active-emblem-item';
-        img.src=b.data;
-        img.alt=b.id;
-        if(activeBadges.some(a=>a.id===b.id)) img.classList.add('active');
-
-        img.addEventListener('click',()=>{
-            if(activeBadges.some(a=>a.id===b.id)){
-                activeBadges=activeBadges.filter(a=>a.id!==b.id);
-            } else {
-                activeBadges.push(b);
-            }
-            refreshEmblemGrid();
-            render();
-        });
-        emblemGrid.appendChild(img);
+    img.addEventListener('click',()=>{
+      if(activeBadges.some(a=>a.id===b.id)){
+        activeBadges = activeBadges.filter(a=>a.id!==b.id);
+      } else {
+        activeBadges.push(b);
+      }
+      refreshEmblemGrid();
+      render();
     });
+    emblemGrid.appendChild(img);
+  });
 }
 
-usernameEl.addEventListener('input',render);
-messageEl.addEventListener('input',render);
+function renderStatus(){
+  const tainted = badgesBase.filter(b=>b.tainted);
+  if(tainted.length === 0){
+    statusEl.innerHTML = `<span class="ok">Wszystkie emblemty wyglądają poprawnie pod kątem CORS — eksport powinien działać.</span>`;
+    taintedContainer.style.display = 'none';
+  } else {
+    statusEl.innerHTML = `<span class="error">Wykryto ${tainted.length} emblem(ów) z problemem CORS — eksport PNG będzie zablokowany jeśli zostaną użyte.</span>`;
+    taintedContainer.style.display = 'block';
+    taintedContainer.innerHTML = '<strong>Problemowe pliki (CORS):</strong><br>' + tainted.map(t => escapeHtml(t.srcOriginal)).join('<br>');
+  }
+}
 
-bgDarkBtn.addEventListener('click',()=>updateBackground('dark'));
-bgLightBtn.addEventListener('click',()=>updateBackground('light'));
+usernameEl.addEventListener('input', render);
+messageEl.addEventListener('input', render);
+
+bgDarkBtn.addEventListener('click', ()=>updateBackground('dark'));
+bgLightBtn.addEventListener('click', ()=>updateBackground('light'));
 
 colorSwatches.forEach(s=>{
-    s.addEventListener('click',()=>{
-        colorSwatches.forEach(c=>c.classList.remove('selected'));
-        s.classList.add('selected');
-        activeColor=s.dataset.color;
-        render();
-    });
+  s.addEventListener('click', ()=>{
+    colorSwatches.forEach(c=>c.classList.remove('selected'));
+    s.classList.add('selected');
+    activeColor = s.dataset.color;
+    render();
+  });
 });
 
-saveCommentBtn.addEventListener('click',async()=>{
-    render();
-    if(!previewEl.firstChild) return;
-    const canvas=await html2canvas(previewEl.firstChild,{
-        backgroundColor:null,
-        scale:2,
-        useCORS:true,
-        allowTaint:false
-    });
-    const data=canvas.toDataURL('image/png');
-    const a=document.createElement('a');
-    a.href=data;
-    a.download='message.png';
+saveCommentBtn.addEventListener('click', async ()=>{
+  render();
+  // sprawdź czy którykolwiek aktywny badge jest tainted
+  const usedTainted = activeBadges.some(b => b.tainted);
+  if(usedTainted){
+    alert('Eksport zablokowany: użyte emblematy mają problem z CORS. Umieść pliki na tej samej domenie lub upewnij się, że serwer zwraca Access-Control-Allow-Origin: *');
+    return;
+  }
+  if(!previewEl.firstChild) return;
+  try {
+    const canvas = await html2canvas(previewEl.firstChild, { backgroundColor:null, scale:2, useCORS:true, allowTaint:false });
+    const data = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = data;
+    a.download = 'message.png';
     a.click();
+  } catch(err){
+    console.error(err);
+    alert('Błąd podczas renderowania canvas: ' + err.message + '\nSprawdź konsolę. Upewnij się, że wszystkie użyte obrazy obsługują CORS lub są hostowane w tym samym pochodzeniu.');
+  }
 });
 
 function escapeHtml(s){
-    return s.replace(/&/g,'&amp;')
-            .replace(/</g,'&lt;')
-            .replace(/>/g,'&gt;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function render(){
-    const name=escapeHtml(usernameEl.value||'test');
-    const messageText=escapeHtml(messageEl.value||'message');
-    const parts=messageText.replace(/\n/g,'<br>');
-
-    const badgeHtml=activeBadges.map(b=>`<img class="badge" src="${b.data}" crossOrigin="anonymous">`).join('');
-    const bgClass=activeBackground==='light'?'light-bg':'';
-
-    previewEl.innerHTML=`
-        <div class="chat-line ${bgClass}">
-            <div class="badges">${badgeHtml}</div>
-            <span class="username" style="color:${activeColor}">${name}</span>: <span class="message">${parts}</span>
-        </div>`;
+  const name = escapeHtml(usernameEl.value || 'test');
+  const messageText = escapeHtml(messageEl.value || 'message');
+  const parts = messageText.replace(/\n/g, '<br>');
+  const badgeHtml = activeBadges.map(b => `<img class="badge" src="${b.srcUse}" crossorigin="anonymous">`).join('');
+  const bgClass = activeBackground === 'light' ? 'light-bg' : '';
+  previewEl.innerHTML = `
+    <div class="chat-line ${bgClass}">
+      <div class="badges">${badgeHtml}</div>
+      <span class="username" style="color:${activeColor}">${name}</span>: <span class="message">${parts}</span>
+    </div>`;
 }
 
 function updateBackground(style){
-    activeBackground=style;
-    bgDarkBtn.classList.toggle('selected',style==='dark');
-    bgLightBtn.classList.toggle('selected',style==='light');
-    render();
+  activeBackground = style;
+  bgDarkBtn.classList.toggle('selected', style === 'dark');
+  bgLightBtn.classList.toggle('selected', style === 'light');
+  render();
 }
 
+// Zwolnij objectURL przy zamknięciu/odświeżeniu strony
+window.addEventListener('unload', ()=>{
+  badgesBase.forEach(b=>{
+    if(b.srcUse && b.srcUse.startsWith('blob:')) {
+      try { URL.revokeObjectURL(b.srcUse); } catch(e) {}
+    }
+  });
+});
+
+// Start
 initializeLocalEmblems();
 updateBackground(activeBackground);
 </script>
