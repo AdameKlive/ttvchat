@@ -220,7 +220,7 @@ function refreshEmblemGrid(){
 function renderStatus(){
   const tainted = badgesBase.filter(b=>b.tainted);
   if(tainted.length === 0){
-    statusEl.innerHTML = `<span class="ok">Wszystkie emblemty wyglądają poprawnie pod kątem CORS — eksport powinien działać.</span>`;
+    statusEl.innerHTML = `<span class="ok"></span>`;
     taintedContainer.style.display = 'none';
   } else {
     statusEl.innerHTML = `<span class="error">Wykryto ${tainted.length} emblem(ów) z problemem CORS — eksport PNG będzie zablokowany jeśli zostaną użyte.</span>`;
@@ -305,3 +305,4 @@ updateBackground(activeBackground);
 </script>
 </body>
 </html>
+
