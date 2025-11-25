@@ -26,7 +26,7 @@ button.secondary { background:#333; color:#fff; }
 button.bg-btn { border:1px solid #333; background:#333; color:white; }
 button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 .bottom-preview-container { width:100%; display:flex; justify-content:center; margin-top:30px; }
-.chat-line { max-width:480px; padding:10px 15px; border-radius:8px; background:#000; font-size:16px; display:inline-block; text-align:left; overflow-wrap:break-word; transition:background 0.2s,color 0.2s; }
+.chat-line { max-width:480px; padding:10px 15px; border-radius:8px; background:#000; font-size:16px; display:inline-block; text-align:left; overflow-wrap:break-word; transition:background 0.2s,color 0.2s; user-select: none; cursor: default; }
 .chat-line.light-bg { background:#fff; color:#000; }
 .chat-line.light-bg .message { color:#000; }
 .badge {
@@ -318,5 +318,6 @@ updateBackground(activeBackground);
 </script>
 </body>
 </html>
+
 
 
