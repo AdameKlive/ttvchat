@@ -249,23 +249,44 @@ colorSwatches.forEach(s=>{
 saveCommentBtn.addEventListener('click', async ()=>{
   render();
   const usedTainted = activeBadges.some(b => b.tainted);
-  if(usedTainted){
-    alert('Eksport zablokowany: użyte emblematy mają problem z CORS. Umieść pliki na tej samej domenie lub upewnij się, że serwer zwraca Access-Control-Allow-Origin: *');
+  if (usedTainted) {
+    alert('Eksport zablokowany: użyte emblematy mają problem z CORS.');
     return;
   }
-  if(!previewEl.firstChild) return;
+  if (!previewEl.firstChild) return;
+
   try {
-    const canvas = await html2canvas(previewEl.firstChild, { backgroundColor:null, scale:2, useCORS:true, allowTaint:false });
+    const canvas = await html2canvas(previewEl.firstChild, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      allowTaint: false
+    });
+
     const data = canvas.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = data;
-    a.download = 'message.png';
-    a.click();
+
+    // USUWAMY stary wynik jeśli był
+    const old = document.getElementById('export-result-img');
+    if (old) old.remove();
+
+    // TWORZYMY PRAWIDZIWY <img>, który można zapisać PPM
+    const img = document.createElement('img');
+    img.id = 'export-result-img';
+    img.src = data;
+    img.style.marginTop = '20px';
+    img.style.maxWidth = '100%';
+    img.style.border = '1px solid #444';
+    img.style.borderRadius = '8px';
+
+    // Wstawiamy pod podgląd
+    previewEl.appendChild(img);
+
   } catch(err){
     console.error(err);
     alert('Błąd podczas renderowania canvas: ' + err.message);
   }
 });
+
 
 function escapeHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -304,4 +325,5 @@ updateBackground(activeBackground);
 </script>
 </body>
 </html>
+
 
