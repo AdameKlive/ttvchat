@@ -26,26 +26,49 @@ button.secondary { background:#333; color:#fff; }
 button.bg-btn { border:1px solid #333; background:#333; color:white; }
 button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 .bottom-preview-container { width:100%; display:flex; justify-content:center; margin-top:30px; }
-.chat-line { max-width:480px; padding:10px 15px; border-radius:8px; background:#000; font-size:16px; display:inline-block; text-align:left; overflow-wrap:break-word; transition:background 0.2s,color 0.2s; user-select: none; cursor: default; }
+
+/* CHAT LINE POPRAWIONE */
+.chat-line {
+  display:flex;             /* poziome ułożenie */
+  align-items:center;       /* wyrównanie pionowe badge + tekst */
+  gap:6px;
+  max-width:480px;
+  padding:10px 15px;
+  border-radius:8px;
+  background:#000;
+  font-size:16px;
+  overflow-wrap:break-word;
+  transition:background 0.2s,color 0.2s;
+  user-select:none;
+  cursor:default;
+}
 .chat-line.light-bg { background:#fff; color:#000; }
 .chat-line.light-bg .message { color:#000; }
+
+.badges {
+  display:flex;
+  align-items:center;
+  gap:2px;
+}
+
 .badge {
   width:18px;
   height:18px;
   object-fit:contain;
-  vertical-align:middle; /* dodaj wyrównanie do środka linii tekstu */
-}
-
-.badge { width:18px; height:18px; object-fit:contain; }
-.username {
-  font-weight:700;
-  display:inline-flex;
-  align-items:center; /* zapewnia pionowe wyrównanie z ikonami */
-  line-height:18px;
   vertical-align:middle;
 }
 
-.message { word-break:break-word; display:inline; }
+.username {
+  font-weight:700;
+  line-height:1;
+  display:inline;
+}
+
+.message {
+  word-break:break-word;
+  display:inline;
+}
+
 #message-controls-block { background-color:transparent; padding:0; }
 #status { font-size:13px; color:#ffd; margin-top:8px; }
 #status .error { color:#ff7373; }
@@ -117,7 +140,7 @@ const bgLightBtn = document.getElementById('bgLightBtn');
 const colorSwatches = document.querySelectorAll('.color-swatch');
 const saveCommentBtn = document.getElementById('save-comment');
 
-let badgesBase = [];      // { id, srcOriginal, srcUse (objectURL or original), tainted:bool }
+let badgesBase = [];      
 let activeBadges = [];
 let activeBackground = 'dark';
 let activeColor = '#9147ff';
@@ -125,7 +148,6 @@ let activeColor = '#9147ff';
 function uid(){ return 'b'+Math.random().toString(36).slice(2,9); }
 
 async function initializeLocalEmblems(){
-  // Pobierz listę plików z emblems.json (tablica URL-i / ścieżek)
   statusEl.textContent = 'Ładowanie emblems.json...';
   try {
     const resp = await fetch('emblems.json', {cache:'no-cache'});
@@ -133,55 +155,29 @@ async function initializeLocalEmblems(){
     const files = await resp.json();
     if(!Array.isArray(files)) throw new Error('emblems.json musi zawierać tablicę URL-i');
     limitMessage.textContent = `Emblems in base: ${files.length}`;
-    // Dla każdego URL spróbuj fetch->blob (najlepiej, jeśli CORS OK) i test canvas
     const loadPromises = files.map(async (url)=>{
       const id = uid();
       let srcUse = url;
       let tainted = true;
-      // 1) spróbuj fetch -> blob -> objectURL
       try {
         const f = await fetch(url, {mode:'cors'});
         if(f.ok){
           const blob = await f.blob();
-          // utwórz objectURL, użyj tego do rysowania; objectURL będzie z tej samej origin w kontekście przeglądarki
           srcUse = URL.createObjectURL(blob);
-        } else {
-          // fetch zwrócił status, ale nie 2xx — zostaw oryginał i daj szansę innemu testowi
-          srcUse = url;
-        }
-      } catch(e){
-        // fetch nie powiódł się (CORS/NETWORK) — zostaw oryginalny URL i spróbuj załadować jako <img crossorigin>
-        srcUse = url;
-      }
-      // 2) Załaduj tymczasowo i przetestuj czy da się z niego zrobić dataURL (czy jest tainted)
+        } else { srcUse = url; }
+      } catch(e){ srcUse = url; }
       try {
         const img = await loadImageElement(srcUse);
-        // test draw
         const can = document.createElement('canvas');
         can.width = Math.max(1, img.naturalWidth);
         can.height = Math.max(1, img.naturalHeight);
         const ctx = can.getContext('2d');
         ctx.drawImage(img, 0, 0);
-        // próba toDataURL
-        try {
-          can.toDataURL('image/png');
-          tainted = false;
-        } catch(err){
-          tainted = true;
-        }
-        // zwolnij objectURL jeśli został utworzony
-        if(srcUse.startsWith('blob:')) {
-          // nie usuwamy od razu jeśli planujemy używać tej objectURL dłużej — tutaj usuniemy dopiero przy unload
-        }
-      } catch(e){
-        // nie udało się załadować obrazu — oznacz jako tainted
-        tainted = true;
-      }
+        try { can.toDataURL('image/png'); tainted=false; } catch(err){ tainted=true; }
+      } catch(e){ tainted=true; }
       return { id, srcOriginal: url, srcUse, tainted };
     });
-
     badgesBase = await Promise.all(loadPromises);
-    // Wyświetl w gridzie i status
     refreshEmblemGrid();
     renderStatus();
     render();
@@ -194,13 +190,10 @@ async function initializeLocalEmblems(){
 function loadImageElement(src){
   return new Promise((resolve, reject) => {
     const img = new Image();
-    // ustaw crossorigin - przy użyciu objectURL nie ma znaczenia, przy zewnętrznych serwerach spróbuje zażądać CORS
     img.crossOrigin = 'anonymous';
     img.onload = ()=>resolve(img);
-    img.onerror = (e)=>reject(new Error('Nie załadowano obrazu: ' + src));
+    img.onerror = ()=>reject(new Error('Nie załadowano obrazu: ' + src));
     img.src = src;
-    // jeśli src jest objectURL i już blob, to crossOrigin nie wpływa
-    // timeout ochronny
     setTimeout(()=>reject(new Error('timeout loading image: ' + src)), 8000);
   });
 }
@@ -216,13 +209,10 @@ function refreshEmblemGrid(){
     img.title = (b.tainted ? 'TAINTED — CORS problem' : 'OK');
     if(activeBadges.some(a=>a.id===b.id)) img.classList.add('active');
     if(b.tainted) img.style.filter = 'grayscale(60%) contrast(0.9)';
-
     img.addEventListener('click',()=>{
       if(activeBadges.some(a=>a.id===b.id)){
         activeBadges = activeBadges.filter(a=>a.id!==b.id);
-      } else {
-        activeBadges.push(b);
-      }
+      } else { activeBadges.push(b); }
       refreshEmblemGrid();
       render();
     });
@@ -244,7 +234,6 @@ function renderStatus(){
 
 usernameEl.addEventListener('input', render);
 messageEl.addEventListener('input', render);
-
 bgDarkBtn.addEventListener('click', ()=>updateBackground('dark'));
 bgLightBtn.addEventListener('click', ()=>updateBackground('light'));
 
@@ -259,7 +248,6 @@ colorSwatches.forEach(s=>{
 
 saveCommentBtn.addEventListener('click', async ()=>{
   render();
-  // sprawdź czy którykolwiek aktywny badge jest tainted
   const usedTainted = activeBadges.some(b => b.tainted);
   if(usedTainted){
     alert('Eksport zablokowany: użyte emblematy mają problem z CORS. Umieść pliki na tej samej domenie lub upewnij się, że serwer zwraca Access-Control-Allow-Origin: *');
@@ -275,7 +263,7 @@ saveCommentBtn.addEventListener('click', async ()=>{
     a.click();
   } catch(err){
     console.error(err);
-    alert('Błąd podczas renderowania canvas: ' + err.message + '\nSprawdź konsolę. Upewnij się, że wszystkie użyte obrazy obsługują CORS lub są hostowane w tym samym pochodzeniu.');
+    alert('Błąd podczas renderowania canvas: ' + err.message);
   }
 });
 
@@ -303,7 +291,6 @@ function updateBackground(style){
   render();
 }
 
-// Zwolnij objectURL przy zamknięciu/odświeżeniu strony
 window.addEventListener('unload', ()=>{
   badgesBase.forEach(b=>{
     if(b.srcUse && b.srcUse.startsWith('blob:')) {
@@ -312,12 +299,8 @@ window.addEventListener('unload', ()=>{
   });
 });
 
-// Start
 initializeLocalEmblems();
 updateBackground(activeBackground);
 </script>
 </body>
 </html>
-
-
-
