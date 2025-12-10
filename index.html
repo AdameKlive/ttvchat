@@ -29,7 +29,7 @@ button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 
 /* CHAT LINE POPRAWIONE */
 .chat-line {
-  display:flex;             /* poziome ułożenie */
+  display: block;            /* poziome ułożenie */
   align-items:center;       /* wyrównanie pionowe badge + tekst */
   gap:6px;
   max-width:480px;
@@ -61,12 +61,14 @@ button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 .username {
   font-weight:700;
   line-height:1;
-  display:inline;
+  display: block;
+  white-space: normal;
 }
 
 .message {
   word-break:break-word;
-  display:inline;
+  display: block;
+  margin-left: 6px; /* ile potrzeba w prawo */
 }
 
 #message-controls-block { background-color:transparent; padding:0; }
@@ -325,5 +327,6 @@ updateBackground(activeBackground);
 </script>
 </body>
 </html>
+
 
 
