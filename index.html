@@ -70,7 +70,7 @@ button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 
 .message {
   word-break: break-word;
-  display: block;
+  display: inline;
 }
 
 #message-controls-block { background-color:transparent; padding:0; }
@@ -303,10 +303,11 @@ function render(){
     <div class="chat-line ${bgClass}">
       <div class="username-line">
         <div class="badges">${badgeHtml}</div>
-        <span class="username" id="username-span" style="color:${activeColor}">${name}</span>:
+        <span class="username" style="color:${activeColor}">${name}</span>: 
+        <span class="message">${parts}</span>
       </div>
-      <span class="message">${parts}</span>
     </div>`;
+}
 
   const usernameSpan = document.getElementById('username-span');
   const usernameWidth = usernameSpan.offsetWidth + 6;
@@ -333,3 +334,4 @@ updateBackground(activeBackground);
 </script>
 </body>
 </html>
+
