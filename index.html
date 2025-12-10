@@ -27,7 +27,6 @@ button.bg-btn { border:1px solid #333; background:#333; color:white; }
 button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 .bottom-preview-container { width:100%; display:flex; justify-content:center; margin-top:30px; }
 
-/* CHAT LINE POPRAWIONE */
 .chat-line {
   display: flex;
   flex-direction: column;
@@ -45,33 +44,15 @@ button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 
 .username-line {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: nowrap;
 }
 
-.badges {
-  display:flex;
-  align-items:center;
-  gap:2px;
-}
+.badges { display:flex; align-items:center; gap:2px; }
+.badge { width:18px; height:18px; object-fit:contain; vertical-align:middle; }
 
-.badge {
-  width:18px;
-  height:18px;
-  object-fit:contain;
-  vertical-align:middle;
-}
-
-.username {
-  font-weight:700;
-  white-space: nowrap;
-  margin-right:6px;
-}
-
-.message {
-  word-break: break-word;
-  display: inline;
-}
+.username { font-weight:700; white-space: nowrap; margin-right:6px; }
+.message { display:inline; word-break:break-word; }
 
 #message-controls-block { background-color:transparent; padding:0; }
 #status { font-size:13px; color:#ffd; margin-top:8px; }
@@ -144,7 +125,7 @@ const bgLightBtn = document.getElementById('bgLightBtn');
 const colorSwatches = document.querySelectorAll('.color-swatch');
 const saveCommentBtn = document.getElementById('save-comment');
 
-let badgesBase = [];      
+let badgesBase = [];
 let activeBadges = [];
 let activeBackground = 'dark';
 let activeColor = '#9147ff';
@@ -288,9 +269,7 @@ saveCommentBtn.addEventListener('click', async ()=>{
   }
 });
 
-function escapeHtml(s){
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function render(){
   const name = escapeHtml(usernameEl.value || 'test');
@@ -303,15 +282,9 @@ function render(){
     <div class="chat-line ${bgClass}">
       <div class="username-line">
         <div class="badges">${badgeHtml}</div>
-        <span class="username" style="color:${activeColor}">${name}</span>: 
-        <span class="message">${parts}</span>
+        <span class="username" style="color:${activeColor}">${name}</span>: <span class="message">${parts}</span>
       </div>
     </div>`;
-}
-
-  const usernameSpan = document.getElementById('username-span');
-  const usernameWidth = usernameSpan.offsetWidth + 6;
-  previewEl.querySelector('.message').style.marginLeft = usernameWidth + 'px';
 }
 
 function updateBackground(style){
@@ -323,9 +296,7 @@ function updateBackground(style){
 
 window.addEventListener('unload', ()=>{
   badgesBase.forEach(b=>{
-    if(b.srcUse && b.srcUse.startsWith('blob:')) {
-      try { URL.revokeObjectURL(b.srcUse); } catch(e) {}
-    }
+    if(b.srcUse && b.srcUse.startsWith('blob:')) try { URL.revokeObjectURL(b.srcUse); } catch(e) {}
   });
 });
 
@@ -334,4 +305,3 @@ updateBackground(activeBackground);
 </script>
 </body>
 </html>
-
