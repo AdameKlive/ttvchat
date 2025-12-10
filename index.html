@@ -29,21 +29,25 @@ button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 
 /* CHAT LINE POPRAWIONE */
 .chat-line {
-  display: block;            /* poziome ułożenie */
-  align-items:center;       /* wyrównanie pionowe badge + tekst */
-  gap:6px;
+  display: flex;
+  flex-direction: column;
   max-width:480px;
   padding:10px 15px;
   border-radius:8px;
   background:#000;
   font-size:16px;
-  overflow-wrap:break-word;
-  transition:background 0.2s,color 0.2s;
   user-select:none;
   cursor:default;
 }
+
 .chat-line.light-bg { background:#fff; color:#000; }
 .chat-line.light-bg .message { color:#000; }
+
+.username-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+}
 
 .badges {
   display:flex;
@@ -60,15 +64,13 @@ button.bg-btn.selected { border-color:#9147ff; background:#5a3d90; }
 
 .username {
   font-weight:700;
-  line-height:1;
-  display: block;
-  white-space: normal;
+  white-space: nowrap;
+  margin-right:6px;
 }
 
 .message {
-  word-break:break-word;
+  word-break: break-word;
   display: block;
-  margin-left: 6px; /* ile potrzeba w prawo */
 }
 
 #message-controls-block { background-color:transparent; padding:0; }
@@ -267,11 +269,9 @@ saveCommentBtn.addEventListener('click', async ()=>{
 
     const data = canvas.toDataURL('image/png');
 
-    // USUWAMY stary wynik jeśli był
     const old = document.getElementById('export-result-img');
     if (old) old.remove();
 
-    // TWORZYMY PRAWIDZIWY <img>, który można zapisać PPM
     const img = document.createElement('img');
     img.id = 'export-result-img';
     img.src = data;
@@ -280,7 +280,6 @@ saveCommentBtn.addEventListener('click', async ()=>{
     img.style.border = '1px solid #444';
     img.style.borderRadius = '8px';
 
-    // Wstawiamy pod podgląd
     previewEl.appendChild(img);
 
   } catch(err){
@@ -288,7 +287,6 @@ saveCommentBtn.addEventListener('click', async ()=>{
     alert('Błąd podczas renderowania canvas: ' + err.message);
   }
 });
-
 
 function escapeHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -300,11 +298,19 @@ function render(){
   const parts = messageText.replace(/\n/g, '<br>');
   const badgeHtml = activeBadges.map(b => `<img class="badge" src="${b.srcUse}" crossorigin="anonymous">`).join('');
   const bgClass = activeBackground === 'light' ? 'light-bg' : '';
+
   previewEl.innerHTML = `
     <div class="chat-line ${bgClass}">
-      <div class="badges">${badgeHtml}</div>
-      <span class="username" style="color:${activeColor}">${name}</span>: <span class="message">${parts}</span>
+      <div class="username-line">
+        <div class="badges">${badgeHtml}</div>
+        <span class="username" id="username-span" style="color:${activeColor}">${name}</span>:
+      </div>
+      <span class="message">${parts}</span>
     </div>`;
+
+  const usernameSpan = document.getElementById('username-span');
+  const usernameWidth = usernameSpan.offsetWidth + 6;
+  previewEl.querySelector('.message').style.marginLeft = usernameWidth + 'px';
 }
 
 function updateBackground(style){
@@ -327,6 +333,3 @@ updateBackground(activeBackground);
 </script>
 </body>
 </html>
-
-
-
